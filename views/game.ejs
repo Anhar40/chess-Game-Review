@@ -510,10 +510,10 @@
       if (isMissedWin) return 'missed';
       if (playedBestMove) return 'best';
 
-      if (loss <= 30) return 'excellent';
-      if (loss <= 70) return 'good';
-      if (loss <= 150) return 'inaccuracy';
-      if (loss <= 300) return 'mistake';
+      if (loss <= 60) return 'excellent';
+      if (loss <= 180) return 'good';
+      if (loss <= 350) return 'inaccuracy';
+      if (loss <= 450) return 'mistake';
       return 'blunder';
     }
 
@@ -728,6 +728,13 @@
       if (!board) return;
       boardOrientation = boardOrientation === 'white' ? 'black' : 'white';
       board.orientation(boardOrientation);
+      if (boardOrientation === 'black') {
+        $('#bottomPlayerName').text(blackName); $('#bottomPlayerMeta').text(blackElo ? `(${blackElo})` : '');
+        $('#topPlayerName').text(whiteName); $('#topPlayerMeta').text(whiteElo ? `(${whiteElo})` : '');
+      } else {
+        $('#bottomPlayerName').text(whiteName); $('#bottomPlayerMeta').text(whiteElo ? `(${whiteElo})` : '');
+        $('#topPlayerName').text(blackName); $('#topPlayerMeta').text(blackElo ? `(${blackElo})` : '');
+      }
       positionArrowLayer();
       drawSuggestionArrow();
       drawSquareBadge(currentPly);
