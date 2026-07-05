@@ -652,13 +652,13 @@
       const defs = document.createElementNS(ns, 'defs');
       const marker = document.createElementNS(ns, 'marker');
       marker.setAttribute('id', 'arrowhead');
-      marker.setAttribute('markerWidth', '6');
-      marker.setAttribute('markerHeight', '6');
-      marker.setAttribute('refX', '3');
-      marker.setAttribute('refY', '3');
+      marker.setAttribute('markerWidth', '4');
+      marker.setAttribute('markerHeight', '4');
+      marker.setAttribute('refX', '2');
+      marker.setAttribute('refY', '2');
       marker.setAttribute('orient', 'auto');
       const poly = document.createElementNS(ns, 'polygon');
-      poly.setAttribute('points', '0,0 6,3 0,6');
+      poly.setAttribute('points', '0,0 4,2 0,4');
       poly.setAttribute('fill', 'rgba(255, 170, 0, 0.9)');
       marker.appendChild(poly);
       defs.appendChild(marker);
@@ -673,7 +673,7 @@
       line.setAttribute('x2', to.x);
       line.setAttribute('y2', to.y);
       line.setAttribute('stroke', 'rgba(255, 170, 0, 0.75)');
-      line.setAttribute('stroke-width', Math.max(4, boardWidthPx / 40));
+      line.setAttribute('stroke-width', Math.max(2, boardWidthPx / 80));
       line.setAttribute('marker-end', 'url(#arrowhead)');
       line.setAttribute('stroke-linecap', 'round');
       group.appendChild(line);
