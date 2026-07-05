@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Chess Game Review - Analisis Catur dengan Stockfish</title>
+  <script src="/cdn/tailwind"></script>
+  <script src="/cdn/jquery.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      background-color: #0f0f0d;
+      background-image:
+        radial-gradient(ellipse at 20% 50%, rgba(34,197,94,0.04) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 50%, rgba(34,197,94,0.03) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 0%, rgba(251,191,36,0.02) 0%, transparent 40%);
+    }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #1e1e1b; }
+    ::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
+    input, select { font-size: 16px; }
+
+    .chess-bg-grid {
+      background-image:
+        linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+    .animate-float { animation: float 4s ease-in-out infinite; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-up { animation: fadeUp 0.8s ease-out forwards; }
+
+    .hero-icon-glow {
+      filter: drop-shadow(0 0 30px rgba(34,197,94,0.2));
+    }
+
+    .card-feature {
+      background: rgba(30,30,27,0.7);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.06);
+      transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card-feature:hover {
+      transform: translateY(-4px);
+      border-color: rgba(34,197,94,0.3);
+      box-shadow: 0 8px 30px rgba(34,197,94,0.08);
+    }
+
+    .card-feature-icon {
+      font-size: 28px;
+      line-height: 1;
+    }
+
+    .stagger-item {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    .stagger-item.visible {
+      animation: fadeUp 0.6s ease-out forwards;
+    }
+
+    .card-search {
+      background: rgba(30,30,27,0.8);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .card-result {
+      background: #1e1e1b;
+      transition: all 0.2s ease;
+    }
+    .card-result:hover {
+      background: #2a2a26;
+      border-color: rgba(34,197,94,0.4) !important;
+      transform: translateX(4px);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      transition: all 0.25s ease;
+    }
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #2dd46b, #1a9c4a);
+      transform: scale(1.03);
+      box-shadow: 0 6px 25px rgba(34,197,94,0.25);
+    }
+    .btn-primary:active {
+      transform: scale(0.97);
+    }
+
+    .deco-piece {
+      position: fixed;
+      opacity: 0.04;
+      pointer-events: none;
+      z-index: 0;
+      font-size: 180px;
+      user-select: none;
+    }
+
+    @media (max-width: 640px) {
+      .deco-piece { font-size: 100px; }
+      .hero-icon-glow svg { width: 120px; height: 120px; }
+    }
+  </style>
+</head>
+<body class="min-h-screen text-gray-200 font-sans">
+  <!-- Decorative chess pieces -->
+  <div class="deco-piece" style="top: -20px; left: -40px; transform: rotate(-15deg);">♝</div>
+  <div class="deco-piece" style="bottom: -20px; right: -30px; transform: rotate(25deg);">♜</div>
+  <div class="deco-piece" style="top: 40%; right: -50px; transform: rotate(10deg); display: none;" class="md:block">♛</div>
+
+  <div class="relative z-10">
+    <!-- ============================== -->
+    <!-- HERO SECTION                   -->
+    <!-- ============================== -->
+    <section class="max-w-6xl mx-auto px-4 sm:px-6 pt-12 sm:pt-16 pb-10 sm:pb-14">
+      <div class="flex flex-col md:flex-row items-center gap-8 md:gap-14">
+        <!-- Chess Icon -->
+        <div class="flex-shrink-0 animate-float hero-icon-glow order-1 md:order-2">
+          <svg width="180" height="180" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="knightGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#22c55e"/>
+                <stop offset="100%" stop-color="#16a34a"/>
+              </linearGradient>
+              <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#22c55e" stop-opacity="0.4"/>
+                <stop offset="100%" stop-color="#16a34a" stop-opacity="0.1"/>
+              </linearGradient>
+            </defs>
+            <circle cx="100" cy="100" r="92" stroke="url(#ringGrad)" stroke-width="1.5" fill="rgba(34,197,94,0.03)"/>
+            <circle cx="100" cy="100" r="82" stroke="url(#ringGrad)" stroke-width="1" fill="rgba(34,197,94,0.02)"/>
+            <text x="100" y="132" text-anchor="middle" font-size="110" fill="url(#knightGrad)" font-family="serif">♞</text>
+          </svg>
+        </div>
+
+        <!-- Hero Text -->
+        <div class="text-center md:text-left order-2 md:order-1 animate-fade-up">
+          <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white leading-tight">
+            Chess<br class="sm:hidden">
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-green-500">Game Review</span>
+          </h1>
+          <p class="text-gray-400 text-sm sm:text-base md:text-lg mt-3 sm:mt-4 max-w-xl leading-relaxed">
+            Analisis permainan catur menggunakan <strong class="text-green-400 font-semibold">Stockfish</strong>.
+            Temukan langkah terbaik, blunder, brilliant, opening, dan pelajari permainanmu secara mendalam.
+          </p>
+
+          <!-- CTA Buttons -->
+          <div class="flex flex-col sm:flex-row items-center gap-3 mt-6 sm:mt-8">
+            <button onclick="document.getElementById('searchSection').scrollIntoView({behavior:'smooth', block:'start'})"
+              class="btn-primary text-white font-bold px-8 py-3.5 rounded-xl text-base shadow-lg w-full sm:w-auto cursor-pointer">
+              <span class="flex items-center gap-2 justify-center">
+                <span>▶</span>
+                <span>Mulai Analisis</span>
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== -->
+    <!-- FEATURES SECTION               -->
+    <!-- ============================== -->
+    <section class="max-w-5xl mx-auto px-4 sm:px-6 pb-10 sm:pb-12">
+      <div class="text-center mb-8 stagger-item" id="featuresTitle">
+        <h2 class="text-xl sm:text-2xl font-bold text-white">Fitur Unggulan</h2>
+        <p class="text-gray-500 text-sm mt-1">Semua analisis berjalan di browser — 100% gratis</p>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+        <div class="card-feature rounded-xl p-4 sm:p-5 stagger-item">
+          <div class="card-feature-icon mb-2">♟️</div>
+          <h3 class="text-white font-semibold text-sm sm:text-base">Analisis Stockfish</h3>
+          <p class="text-gray-500 text-xs sm:text-sm mt-1 leading-relaxed">Engine catur terkuat berjalan langsung di browser. Evaluasi setiap langkah secara real-time.</p>
+        </div>
+        <div class="card-feature rounded-xl p-4 sm:p-5 stagger-item">
+          <div class="card-feature-icon mb-2">📖</div>
+          <h3 class="text-white font-semibold text-sm sm:text-base">Deteksi Opening Book</h3>
+          <p class="text-gray-500 text-xs sm:text-sm mt-1 leading-relaxed">Kenali nama opening, variasi, dan kode ECO secara otomatis dari setiap permainan.</p>
+        </div>
+        <div class="card-feature rounded-xl p-4 sm:p-5 stagger-item">
+          <div class="card-feature-icon mb-2">⭐</div>
+          <h3 class="text-white font-semibold text-sm sm:text-base">Penilaian Langkah</h3>
+          <p class="text-gray-500 text-xs sm:text-sm mt-1 leading-relaxed">Best, Excellent, Good, Inaccuracy, Mistake, Blunder — klasifikasi langkah seperti Chess.com.</p>
+        </div>
+        <div class="card-feature rounded-xl p-4 sm:p-5 stagger-item">
+          <div class="card-feature-icon mb-2">📊</div>
+          <h3 class="text-white font-semibold text-sm sm:text-base">Evaluasi Centipawn</h3>
+          <p class="text-gray-500 text-xs sm:text-sm mt-1 leading-relaxed">Grafik evaluasi, winning chances, dan analisis mendalam setiap posisi di papan.</p>
+        </div>
+        <div class="card-feature rounded-xl p-4 sm:p-5 stagger-item">
+          <div class="card-feature-icon mb-2">🔍</div>
+          <h3 class="text-white font-semibold text-sm sm:text-base">Saran Langkah Terbaik</h3>
+          <p class="text-gray-500 text-xs sm:text-sm mt-1 leading-relaxed">Stockfish menampilkan langkah terbaik dengan tanda panah langsung di papan catur.</p>
+        </div>
+        <div class="card-feature rounded-xl p-4 sm:p-5 stagger-item">
+          <div class="card-feature-icon mb-2">🎯</div>
+          <h3 class="text-white font-semibold text-sm sm:text-base">Review Lengkap</h3>
+          <p class="text-gray-500 text-xs sm:text-sm mt-1 leading-relaxed">Lihat ringkasan akurasi, blunder, dan momen kritis dari seluruh permainan.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== -->
+    <!-- SEARCH SECTION                 -->
+    <!-- ============================== -->
+    <section id="searchSection" class="max-w-4xl mx-auto px-4 sm:px-6 pb-10 sm:pb-14 stagger-item">
+      <div class="card-search rounded-2xl p-5 sm:p-7 shadow-xl">
+        <div class="text-center mb-5 sm:mb-6">
+          <h2 class="text-lg sm:text-xl font-bold text-white">Analisis Permainan Chess.com</h2>
+          <p class="text-gray-500 text-xs sm:text-sm mt-1">Masukkan username dan bulan untuk memulai</p>
+        </div>
+
+        <form id="searchForm">
+          <div class="space-y-4">
+            <div>
+              <label for="username" class="block text-sm font-medium text-gray-300 mb-1.5">Username Chess.com</label>
+              <div class="relative">
+                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 text-lg">♔</span>
+                <input type="text" id="username" placeholder="Contoh: magnuscarlsen" autocomplete="off" autocapitalize="off"
+                  class="w-full pl-10 pr-4 py-3 rounded-xl bg-[#2a2a26] border border-gray-700 text-white placeholder-gray-500 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition text-sm">
+              </div>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3 sm:gap-4">
+              <div class="flex-1">
+                <label for="month" class="block text-sm font-medium text-gray-300 mb-1.5">Bulan</label>
+                <select id="month"
+                  class="w-full px-4 py-3 rounded-xl bg-[#2a2a26] border border-gray-700 text-white focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition text-sm">
+                </select>
+              </div>
+              <div class="flex-1">
+                <label for="year" class="block text-sm font-medium text-gray-300 mb-1.5">Tahun</label>
+                <select id="year"
+                  class="w-full px-4 py-3 rounded-xl bg-[#2a2a26] border border-gray-700 text-white focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition text-sm">
+                </select>
+              </div>
+              <div class="flex items-end sm:min-w-[120px]">
+                <button type="submit" id="searchBtn"
+                  class="w-full py-3 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 active:scale-[0.97] text-white font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 shadow-lg text-sm">
+                  <span class="flex items-center gap-2 justify-center">
+                    <span>🔍</span>
+                    <span>Cari Game</span>
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- Loading -->
+    <section class="max-w-4xl mx-auto px-4 sm:px-6">
+      <div id="loading" class="hidden text-center py-10">
+        <div class="inline-block w-10 h-10 border-4 border-green-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p class="text-gray-400 text-sm">Mengambil data dari Chess.com...</p>
+        <p class="text-gray-600 text-xs mt-1">Mohon tunggu sebentar</p>
+      </div>
+
+      <!-- Error -->
+      <div id="error" class="hidden card-search rounded-2xl p-5 mb-8 border-l-4 border-red-500">
+        <p id="errorMsg" class="text-red-400 text-sm"></p>
+      </div>
+
+      <!-- Results -->
+      <div id="results" class="hidden space-y-3 pb-10 sm:pb-14">
+        <div class="flex items-center justify-between flex-wrap gap-2 mb-4">
+          <h2 class="text-lg sm:text-xl font-bold text-white">
+            Game
+            <span id="usernameDisplay" class="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-green-500"></span>
+          </h2>
+          <span class="text-xs sm:text-sm text-gray-500">klik game untuk analisa</span>
+        </div>
+        <div id="gameList" class="space-y-2.5"></div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="text-center py-6 sm:py-8 text-gray-600 text-xs">
+      <p>Chess Game Review &mdash; Powered by Stockfish 10 &mdash; Data dari Chess.com API</p>
+    </footer>
+  </div>
+
+  <script>
+    // ================================================================
+    // Stagger animation via IntersectionObserver
+    // ================================================================
+    (function() {
+      const items = document.querySelectorAll('.stagger-item');
+      if (items.length) {
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach((entry, i) => {
+            if (entry.isIntersecting) {
+              const idx = Array.from(items).indexOf(entry.target);
+              entry.target.style.animationDelay = (idx * 0.08) + 's';
+              entry.target.classList.add('visible');
+              observer.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.1 });
+        items.forEach(el => observer.observe(el));
+      }
+    })();
+
+    // ================================================================
+    // Populate month/year selects client-side (avoids server-timezone
+    // mismatch with the browser).
+    // ================================================================
+    const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+    const now = new Date();
+    const curMonth = now.getMonth();
+    const curYear = now.getFullYear();
+
+    const $month = $('#month');
+    MONTHS.forEach((name, i) => {
+      const val = String(i + 1).padStart(2, '0');
+      $month.append(`<option value="${val}" ${i === curMonth ? 'selected' : ''}>${name}</option>`);
+    });
+
+    const $year = $('#year');
+    for (let y = curYear; y >= 2005; y--) {
+      $year.append(`<option value="${y}" ${y === curYear ? 'selected' : ''}>${y}</option>`);
+    }
+
+    // ================================================================
+    // Search form
+    // ================================================================
+    $('#searchForm').on('submit', async function(e) {
+      e.preventDefault();
+      const username = $('#username').val().trim();
+      if (!username) { alert('Masukkan username Chess.com'); return; }
+
+      const month = $('#month').val();
+      const year = $('#year').val();
+
+      $('#loading').removeClass('hidden');
+      $('#error').addClass('hidden');
+      $('#results').addClass('hidden');
+      $('#gameList').empty();
+      $('#searchBtn').prop('disabled', true);
+
+      try {
+        const res = await $.getJSON(`/api/proxy/games/${encodeURIComponent(username)}/${year}/${month}`);
+        $('#loading').addClass('hidden');
+        $('#usernameDisplay').text(username);
+
+        if (!res.games || res.games.length === 0) {
+          $('#gameList').html('<p class="text-gray-500 text-center py-4">Tidak ada game ditemukan untuk bulan ini</p>');
+        } else {
+          [...res.games].reverse().forEach(game => renderGame(game, username));
+        }
+        $('#results').removeClass('hidden');
+      } catch (err) {
+        $('#loading').addClass('hidden');
+        let msg = 'Gagal mengambil data';
+        if (err.responseJSON && err.responseJSON.error) msg = err.responseJSON.error;
+        else if (err.status === 404) msg = 'Username tidak ditemukan';
+        else if (err.status === 0) msg = 'Tidak dapat terhubung ke server. Periksa koneksi internet.';
+        $('#errorMsg').text(msg);
+        $('#error').removeClass('hidden');
+      } finally {
+        $('#searchBtn').prop('disabled', false);
+      }
+    });
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function renderGame(game, username) {
+      const white = game.white?.username || '?';
+      const black = game.black?.username || '?';
+      const result = game.white?.result || game.black?.result || '*';
+      const date = game.end_time
+        ? new Date(game.end_time * 1000).toLocaleDateString('id-ID')
+        : (game.end_date || '-');
+      const timeClass = game.time_class === 'blitz' ? '⚡' : game.time_class === 'rapid' ? '⏱' : (game.time_class === 'bullet' ? '🚀' : '🏆');
+      const isUserWhite = white.toLowerCase() === username.toLowerCase();
+      const userResult = isUserWhite ? game.white?.result : game.black?.result;
+      const resultColor = userResult === 'win' ? 'text-green-400' : (userResult && userResult !== 'win') ? 'text-red-400' : 'text-yellow-400';
+      const opponent = isUserWhite ? black : white;
+
+      const pgn = game.pgn || '';
+      if (!pgn) return;
+
+      const card = $(`
+        <div class="card-result rounded-xl p-3 sm:p-4 cursor-pointer border border-gray-800 game-card">
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-3 sm:gap-4 min-w-0">
+              <span class="text-xl flex-shrink-0">${timeClass}</span>
+              <div class="min-w-0">
+                <p class="text-white font-semibold text-sm sm:text-base truncate">
+                  ${isUserWhite ? '<span class="text-green-400">●</span>' : ''} ${escapeHtml(white)}
+                  <span class="text-gray-500 mx-1">vs</span>
+                  ${escapeHtml(black)} ${!isUserWhite ? '<span class="text-green-400">●</span>' : ''}
+                </p>
+                <p class="text-xs sm:text-sm text-gray-400 truncate">${date} — ${escapeHtml(game.time_class || '-')} (${game.rated ? 'Rated' : 'Casual'})</p>
+              </div>
+            </div>
+            <div class="text-right flex-shrink-0">
+              <p class="text-base sm:text-lg font-bold ${resultColor}">${escapeHtml(result)}</p>
+              <p class="text-xs text-gray-500 truncate max-w-[100px]">vs ${escapeHtml(opponent)}</p>
+            </div>
+          </div>
+        </div>
+      `);
+
+      card.on('click', function() {
+        window.location.href = '/game?pgn=' + encodeURIComponent(pgn);
+      });
+
+      $('#gameList').append(card);
+    }
+  </script>
+</body>
+</html>
