@@ -519,10 +519,10 @@
       if (isMissedWin) return 'missed';
       if (playedBestMove) return 'best';
 
-      if (loss <= 60) return 'excellent';
-      if (loss <= 180) return 'good';
-      if (loss <= 350) return 'inaccuracy';
-      if (loss <= 450) return 'mistake';
+      if (loss <= 30) return 'excellent';
+      if (loss <= 110) return 'good';
+      if (loss <= 180) return 'inaccuracy';
+      if (loss <= 350) return 'mistake';
       return 'blunder';
     }
 
