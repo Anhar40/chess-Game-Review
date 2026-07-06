@@ -2,6 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const path = require('path');
 const fs = require('fs');
+require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -144,12 +145,85 @@ app.get('/api/proxy/games/:username/:yyyy/:mm', async (req, res) => {
   }
 });
 
+// Proxy endpoint for chess.com player profile (avatar, name, etc.)
+app.get('/api/proxy/player/:username', async (req, res) => {
+  const { username } = req.params;
+  try {
+    const response = await axios.get(
+      `https://api.chess.com/pub/player/${encodeURIComponent(username)}`,
+      {
+        timeout: 10000,
+        headers: { 'User-Agent': 'ChessAnalyzerLite/1.0' },
+      }
+    );
+    res.json(response.data);
+  } catch (err) {
+    if (err.response) {
+      return res.status(err.response.status).json({ error: `Chess.com API error: ${err.response.status}` });
+    }
+    res.status(502).json({ error: 'Gagal mengambil data player' });
+  }
+});
+
 // Serve pre-parsed opening book to the client
 app.get('/api/openings', (req, res) => {
   res.json(openingBook);
 });
 
+// ------------------------------------------------------------------
+// Midtrans Snap client (for QRIS donations on the Support page)
+// ------------------------------------------------------------------
+const midtransClient = require('midtrans-client');
+const coreApi = new midtransClient.CoreApi({
+  isProduction: true, // set to false for sandbox
+  serverKey: process.env.MIDTRANS_SERVER_KEY || '',
+});
+
 app.get('/', (req, res) => res.render('index'));
+app.get('/support', (req, res) => res.render('support'));
+app.get('/faq', (req, res) => res.render('faq'));
+app.get('/about', (req, res) => res.render('about'));
+
+// Midtrans QRIS — langsung charge QRIS via Core API, tanpa Snap popup
+app.post('/api/midtrans/transaction', express.json(), async (req, res) => {
+  const { amount, donorName, donorEmail } = req.body;
+  if (!amount || amount < 1000) {
+    return res.status(400).json({ error: 'Minimal donasi Rp1.000' });
+  }
+  const orderId = 'CR-DONATION-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+  try {
+    const charge = await coreApi.charge({
+      payment_type: 'qris',
+      transaction_details: {
+        order_id: orderId,
+        gross_amount: amount,
+      },
+      customer_details: {
+        first_name: donorName || 'Donatur',
+        email: donorEmail || 'donatur@chessreview.app',
+      },
+    });
+    const qrAction = (charge.actions || []).find(a => a.name === 'generate-qr-code');
+    res.json({
+      order_id: orderId,
+      transaction_id: charge.transaction_id,
+      qr_url: qrAction ? qrAction.url : null,
+    });
+  } catch (err) {
+    console.error('Midtrans error:', err.message);
+    res.status(500).json({ error: 'Gagal membuat QRIS: ' + err.message });
+  }
+});
+
+// Midtrans transaction status API
+app.get('/api/midtrans/status/:orderId', async (req, res) => {
+  try {
+    const status = await coreApi.transaction.status(req.params.orderId);
+    res.json(status);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 app.get('/game', (req, res) => {
   const pgn = req.query.pgn;

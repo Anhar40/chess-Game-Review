@@ -2,9 +2,11 @@
 
 ## Stack
 
-- Node.js + Express + EJS (server-rendered, no SPA framework)
-- jQuery, chessboard.js, chess.js 0.12.0, Chart.js, Stockfish 10.0.2 (all served via built-in CDN proxy)
-- chess.com public API for game data
+- Node.js + Express + EJS (server-rendered)
+- jQuery, chessboard.js, chess.js **0.12.0**, Chart.js, Stockfish 10.0.2 — all served through a built-in CDN proxy to avoid tracking-prevention blocking
+- chess.com public API for game data (proxied server-side to avoid CORS)
+- UI language is **Indonesian** (`lang="id"`)
+- Midtrans Snap API for QRIS donations (sandbox by default; set `isProduction: true` in `server.js` for production)
 
 ## Commands
 
@@ -12,29 +14,43 @@
 |---------|-------------|
 | `npm start` or `node server.js` | Start dev server on `http://localhost:3000` |
 | `$env:PORT=8080; node server.js` | Custom port |
+| _No tests, linter, typechecker, or CI configured_ | No verification commands exist |
+
+## Environment Variables (`.env`)
+
+| Variable | Description |
+|----------|-------------|
+| `MIDTRANS_SERVER_KEY` | Midtrans server key (sandbox/production) |
+| `MIDTRANS_CLIENT_KEY` | Midtrans client key (snap token) |
+| `MIDTRANS_MERCHANT_ID` | Midtrans merchant ID |
+| `PORT` | Server port (default 3000) |
 
 ## Architecture
 
-- **`server.js`** — Express entrypoint with 5 routes:
-  - `/` — renders `views/index.ejs` (username search form)
+- **`server.js`** — Express entrypoint. Routes:
+  - `/` — renders `views/index.ejs` (landing page with search form)
+  - `/support` — renders `views/support.ejs` (Midtrans QRIS donation page)
+  - `/faq` — renders `views/faq.ejs` (FAQ accordion page)
+  - `/contact` — renders `views/contact.ejs` (contact form page)
+  - `/about` — renders `views/about.ejs` (about page with timeline & stats)
   - `/game?pgn=...` — renders `views/game.ejs` (board + Stockfish analysis)
-  - `/cdn/:name` — proxies CDN assets (avoids browser tracking prevention blocking third-party scripts)
-  - `/api/proxy/games/:username/:yyyy/:mm` — proxies chess.com API (avoids CORS)
-  - `/api/openings` — serves pre-parsed opening book (loaded from `data/opening.json`)
-- Static files: `views/images/` (piece PNGs) served at `/images/`, `sounds/` served at `/sounds/`
-- Analysis is 100% in-browser via Stockfish Web Worker (no server-side engine)
+  - `/cdn/:name` — proxies CDN assets (1-hour in-memory cache)
+  - `/api/proxy/games/:username/:yyyy/:mm` — proxies chess.com API (sets `User-Agent` header)
+  - `/api/proxy/player/:username` — proxies chess.com player profile (avatar, name, etc.)
+  - `/api/openings` — serves pre-parsed opening book (loaded from `data/opening.json` at startup)
+  - `POST /api/midtrans/transaction` — creates Midtrans Snap transaction for QRIS donation
+  - `GET /api/midtrans/status/:orderId` — checks Midtrans transaction status
+- Static files: `views/images/` (12 piece PNGs: `wP.png`, `bK.png`, etc.) at `/images/`; `sounds/sound.wav` at `/sounds/`
+- Analysis is 100% in-browser via Stockfish Web Worker — no server-side engine, no `.wasm` fetch
 
 ## Critical constraints
 
-- **chess.js 0.12.0 is pinned.** Newer major versions changed the API (`move()` throws instead of returning null). Do not upgrade.
-- **stockfish.js single-file build** — uses no separate `.wasm` fetch, works fully through the CDN proxy.
-- PGN is passed as a query param (`/game?pgn=...`) and embedded via `JSON.stringify(pgn).replace(/</g, '\\u003c')` — safe interpolation, not raw.
-- Chess.com API rejects requests without a `User-Agent` header. The proxy sets one.
-- CDN proxy caches fetched assets for 1 hour in memory (no external cache).
+- **chess.js 0.12.0 is pinned.** PGN parsing uses `sloppy: true`. Do not upgrade — newer versions changed `move()` to throw instead of returning null.
+- **stockfish.js (10.0.2)** is a single-file build with no separate `.wasm` fetch; works through the CDN proxy.
+- PGN is passed as `/game?pgn=...`, embedded via `JSON.stringify(pgn).replace(/</g, '\\u003c')` — safe interpolation, not raw.
+- Opening book loaded from `data/opening.json` (NOT `views/data/openings.json` — that is a stale/unused copy). PGNs are parsed to SAN arrays once at startup.
+- Book positions skip Stockfish evaluation (eval bar shows `📖`); detection is prefix-based (longest match wins).
+- Analysis auto-starts on page load (600ms delay). Keyboard nav: `ArrowLeft`/`ArrowRight`/`Home`/`End`.
 - Month/year selects are populated client-side (avoids server-timezone mismatch).
-- Opening book is loaded from `data/opening.json` (NOT `views/data/openings.json` — that is a stale/unused copy). PGNs are parsed to SAN arrays once at startup and served via `/api/openings`.
-- The opening book client-side logic (`findOpening`, `computeBookPlies`) is in `views/game.ejs`. Detection is prefix-based; the most specific match (longest move sequence) wins.
-- Book positions skip Stockfish evaluation — eval bar shows `📖`, move list shows `📖` icon, and a dedicated "Opening Book" card displays the opening name + ECO code.
-- Analysis auto-starts on page load (600ms delay). Can be stopped with "Hentikan" button.
-- Stockfish worker is terminated after analysis completes or is cancelled.
-- No tests, no linter, no typechecker configured.
+- Chess.com API rejects requests without a `User-Agent` header. The proxy sets `ChessAnalyzerLite/1.0`.
+- Midtrans integration is in sandbox mode by default; set `isProduction: true` in `server.js` for live payments.

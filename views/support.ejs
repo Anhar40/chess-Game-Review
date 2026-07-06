@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Support - Chess Game Review</title>
+  <meta name="description" content="Dukung pengembangan Chess Game Review. Donasi via QRIS Midtrans.">
+  <link rel="icon" href="/images/wN.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="/cdn/tailwind"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <script src="/cdn/jquery.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: #0B1220;
+      color: #F8FAFC;
+      -webkit-font-smoothing: antialiased;
+    }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0B1220; }
+    ::-webkit-scrollbar-thumb { background: #22C55E; border-radius: 3px; }
+    ::selection { background: rgba(34,197,94,0.3); }
+    .navbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      padding: 1rem 0;
+      background: rgba(11,18,32,0.75);
+      backdrop-filter: blur(20px) saturate(1.4);
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      box-shadow: 0 4px 40px rgba(0,0,0,0.3);
+    }
+    .nav-link { position: relative; color: rgba(248,250,252,0.6); transition: color 0.3s ease; text-decoration: none; }
+    .nav-link::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 0; height: 2px; background: #22C55E; transition: width 0.3s ease; border-radius: 1px; }
+    .nav-link:hover { color: #F8FAFC; }
+    .nav-link:hover::after { width: 100%; }
+    .btn-primary { display: inline-flex; align-items: center; gap: 0.5rem; background: linear-gradient(135deg, #22C55E, #16a34a); color: white; font-weight: 600; font-family: inherit; padding: 0.875rem 2rem; border-radius: 14px; border: none; cursor: pointer; transition: all 0.3s ease; text-decoration: none; position: relative; overflow: hidden; }
+    .btn-primary:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 30px rgba(34,197,94,0.25); }
+    .btn-primary:active { transform: scale(0.97); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+    .btn-secondary { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.04); color: #F8FAFC; font-weight: 500; font-family: inherit; padding: 0.875rem 2rem; border-radius: 14px; border: 1px solid rgba(255,255,255,0.08); cursor: pointer; text-decoration: none; transition: all 0.3s ease; }
+    .btn-secondary:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.12); transform: translateY(-2px); }
+    .glass-strong { background: rgba(17,24,39,0.85); backdrop-filter: blur(30px) saturate(1.5); border: 1px solid rgba(255,255,255,0.06); border-radius: 24px; }
+    .support-card { background: #111827; border: 1px solid rgba(255,255,255,0.04); border-radius: 24px; padding: 2.5rem; text-align: center; transition: all 0.4s ease; }
+    .support-card:hover { transform: translateY(-8px); border-color: rgba(34,197,94,0.15); box-shadow: 0 20px 60px rgba(34,197,94,0.06); }
+    .amount-btn { padding: 0.75rem 1.5rem; border-radius: 12px; font-weight: 600; font-size: 0.95rem; font-family: inherit; border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.03); color: #F8FAFC; cursor: pointer; transition: all 0.3s ease; min-width: 90px; }
+    .amount-btn:hover { border-color: rgba(34,197,94,0.3); background: rgba(34,197,94,0.06); }
+    .amount-btn.active { border-color: #22C55E; background: rgba(34,197,94,0.12); color: #22C55E; box-shadow: 0 0 20px rgba(34,197,94,0.1); }
+    .form-input { width: 100%; padding: 0.875rem 1.25rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; color: #F8FAFC; font-family: inherit; font-size: 0.95rem; transition: all 0.3s ease; outline: none; }
+    .form-input::placeholder { color: rgba(248,250,252,0.25); }
+    .form-input:focus { border-color: rgba(34,197,94,0.3); box-shadow: 0 0 0 4px rgba(34,197,94,0.05); }
+    .progress-track { width: 100%; height: 8px; background: rgba(255,255,255,0.04); border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #22C55E, #16a34a); transition: width 1.5s ease; }
+    .stat-number { font-size: 3rem; font-weight: 800; background: linear-gradient(135deg, #22C55E, #16a34a); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; }
+    .spinner { width: 24px; height: 24px; border: 3px solid rgba(34,197,94,0.2); border-top-color: #22C55E; border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (max-width: 768px) { .stat-number { font-size: 2.5rem; } .support-card { padding: 2rem; } }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2.5 no-underline">
+        <span class="text-2xl" style="line-height:1">♟</span>
+        <span class="text-lg font-bold text-[#F8FAFC] tracking-tight">Chess<span class="text-[#22C55E]">Review</span></span>
+      </a>
+      <div class="hidden md:flex items-center gap-1">
+        <a href="/" class="nav-link px-3 py-2 text-sm"><i class="fas fa-home"></i> Home</a>
+        <a href="/support" class="nav-link px-3 py-2 text-sm" style="color:#F8FAFC"><i class="fas fa-heart"></i> Support</a>
+        <a href="/faq" class="nav-link px-3 py-2 text-sm"><i class="fas fa-question-circle"></i> FAQ</a>
+        <a href="/about" class="nav-link px-3 py-2 text-sm"><i class="fas fa-info-circle"></i> About</a>
+      </div>
+      <a href="/" class="hidden md:inline-flex btn-primary text-sm px-5 py-2.5"><i class="fas fa-play"></i> Start Analysis</a>
+    </div>
+  </nav>
+
+  <section class="pt-32 pb-20 sm:pb-28">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto mb-16">
+        <span class="inline-block text-xs font-semibold tracking-widest text-[#22C55E] uppercase mb-4">Support</span>
+        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#F8FAFC] tracking-tight">Support This Project <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#22C55E] to-[#16a34a]"><i class="fas fa-heart"></i></span></h1>
+        <p class="text-[rgba(248,250,252,0.4)] text-base sm:text-lg mt-4 leading-relaxed max-w-2xl mx-auto">Website ini gratis dan tidak ada iklan. Jika kamu terbantu, dukung pengembangannya agar terus meningkat.</p>
+      </div>
+
+      <!-- Donation Card -->
+      <div class="max-w-xl mx-auto mb-16" id="qrisCard">
+        <div class="support-card">
+          <div class="w-18 h-18 mx-auto mb-4" style="width:72px;height:72px;border-radius:20px;background:rgba(34,197,94,0.08);display:flex;align-items:center;justify-content:center;font-size:32px;margin-left:auto;margin-right:auto"><i class="fas fa-credit-card"></i></div>
+          <h2 class="text-xl font-bold text-[#F8FAFC] mb-2">QRIS Donation</h2>
+          <p class="text-[rgba(248,250,252,0.4)] text-sm mb-6">Donasi cepat via QRIS — scan QR dari aplikasi e-wallet atau mobile banking</p>
+
+          <!-- Payment Form -->
+          <div id="payForm" class="space-y-4 text-left">
+            <div>
+              <label class="block text-sm font-medium text-[rgba(248,250,252,0.7)] mb-2">Nama (opsional)</label>
+              <input type="text" id="donorName" placeholder="Nama kamu" class="form-input">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-[rgba(248,250,252,0.7)] mb-2">Email (opsional)</label>
+              <input type="email" id="donorEmail" placeholder="email@example.com" class="form-input">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-[rgba(248,250,252,0.7)] mb-2">Jumlah Donasi</label>
+              <div class="grid grid-cols-3 gap-2 mb-3">
+                <button class="amount-btn active" data-amount="5000" onclick="selectAmount(this)">Rp5.000</button>
+                <button class="amount-btn" data-amount="10000" onclick="selectAmount(this)">Rp10.000</button>
+                <button class="amount-btn" data-amount="25000" onclick="selectAmount(this)">Rp25.000</button>
+                <button class="amount-btn" data-amount="50000" onclick="selectAmount(this)">Rp50.000</button>
+                <button class="amount-btn" data-amount="100000" onclick="selectAmount(this)">Rp100.000</button>
+                <button class="amount-btn" data-amount="0" onclick="selectAmount(this)">Custom</button>
+              </div>
+              <input type="number" id="customAmount" placeholder="Masukkan jumlah" class="form-input hidden" min="1000" step="500">
+            </div>
+            <button onclick="payWithQRIS()" id="payBtn" class="btn-primary w-full justify-center text-base py-4 mt-2">
+              <i class="fas fa-credit-card"></i> Donasi via QRIS
+            </button>
+            <div id="qrisLoading" class="hidden flex items-center gap-3 justify-center py-4">
+              <div class="spinner"></div>
+              <span class="text-[rgba(248,250,252,0.5)] text-sm">Menyiapkan pembayaran...</span>
+            </div>
+            <div id="qrisError" class="hidden text-center py-3 px-4 rounded-xl bg-[rgba(239,68,68,0.08)] border border-[rgba(239,68,68,0.15)]">
+              <p id="qrisErrorMsg" class="text-[#EF4444] text-sm"></p>
+            </div>
+          </div>
+
+          <!-- QR Code Display -->
+          <div id="qrDisplay" class="hidden flex flex-col items-center gap-4 py-4">
+            <img id="qrImage" src="" alt="QR Code" class="w-56 h-56 rounded-xl bg-white p-2" style="image-rendering:pixelated">
+            <p class="text-[rgba(248,250,252,0.5)] text-xs">Scan QR ini dengan aplikasi e-wallet atau mobile banking</p>
+            <p id="qrOrderId" class="text-[rgba(248,250,252,0.2)] text-xs"></p>
+            <div id="qrStatus" class="text-sm"></div>
+            <button onclick="resetQR()" class="btn-secondary text-sm px-5 py-2.5"><i class="fas fa-arrow-left"></i> Kembali</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="max-w-3xl mx-auto mb-16">
+        <div class="glass-strong p-8 sm:p-12">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
+            <div><div class="stat-number">10K+</div><p class="text-[rgba(248,250,252,0.4)] text-sm mt-1">Total Donasi</p></div>
+            <div><div class="stat-number">500+</div><p class="text-[rgba(248,250,252,0.4)] text-sm mt-1">Donatur</p></div>
+            <div><div class="stat-number">100%</div><p class="text-[rgba(248,250,252,0.4)] text-sm mt-1">Transparan</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Development Progress & Roadmap -->
+      <div class="max-w-3xl mx-auto">
+        <div class="glass-strong p-6 sm:p-8">
+          <h2 class="text-lg font-bold text-[#F8FAFC] mb-1">Development Progress</h2>
+          <p class="text-[rgba(248,250,252,0.3)] text-sm mb-5">Fitur yang sudah dan akan datang</p>
+          <div class="space-y-4 mb-8">
+            <div>
+              <div class="flex justify-between text-sm mb-1.5"><span class="text-[rgba(248,250,252,0.6)]">Overall Progress</span><span class="text-[#22C55E] font-semibold">65%</span></div>
+              <div class="progress-track"><div class="progress-fill" style="width:65%"></div></div>
+            </div>
+          </div>
+          <h3 class="text-sm font-bold text-[#F8FAFC] mb-4">Roadmap</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-[rgba(34,197,94,0.06)] border border-[rgba(34,197,94,0.1)]"><span class="text-[#22C55E] font-bold"><i class="fas fa-check text-green-500"></i></span><span class="text-sm text-[rgba(248,250,252,0.7)]">Analysis Engine</span></div>
+            <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-[rgba(34,197,94,0.06)] border border-[rgba(34,197,94,0.1)]"><span class="text-[#22C55E] font-bold"><i class="fas fa-check text-green-500"></i></span><span class="text-sm text-[rgba(248,250,252,0.7)]">Game Review</span></div>
+            <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-[rgba(34,197,94,0.06)] border border-[rgba(34,197,94,0.1)]"><span class="text-[#22C55E] font-bold"><i class="fas fa-check text-green-500"></i></span><span class="text-sm text-[rgba(248,250,252,0.7)]">Opening Explorer</span></div>
+            <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.04)]"><span class="text-[#F59E0B] font-bold"><i class="fas fa-clock"></i></span><span class="text-sm text-[rgba(248,250,252,0.5)]">Puzzle Mode</span></div>
+            <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.04)]"><span class="text-[#F59E0B] font-bold"><i class="fas fa-clock"></i></span><span class="text-sm text-[rgba(248,250,252,0.5)]">Mobile App</span></div>
+            <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.04)]"><span class="text-[#F59E0B] font-bold"><i class="fas fa-clock"></i></span><span class="text-sm text-[rgba(248,250,252,0.5)]">Multiplayer</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="border-t border-[rgba(255,255,255,0.04)] py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <p class="text-[rgba(248,250,252,0.2)] text-xs">Made with <i class="fas fa-heart"></i> &middot; Powered by Stockfish</p>
+        <p class="text-[rgba(248,250,252,0.2)] text-xs">&copy; 2024 Chess Review. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    function selectAmount(btn) {
+      document.querySelectorAll('.amount-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      var amount = btn.getAttribute('data-amount');
+      var customInput = document.getElementById('customAmount');
+      if (amount === '0') {
+        customInput.classList.remove('hidden');
+        customInput.focus();
+      } else {
+        customInput.classList.add('hidden');
+      }
+    }
+
+    function getSelectedAmount() {
+      var active = document.querySelector('.amount-btn.active');
+      if (!active) return 5000;
+      var amount = parseInt(active.getAttribute('data-amount'));
+      if (amount === 0) {
+        return parseInt(document.getElementById('customAmount').value) || 0;
+      }
+      return amount;
+    }
+
+    function payWithQRIS() {
+      var amount = getSelectedAmount();
+      if (!amount || amount < 1000) {
+        showError('Minimal donasi Rp1.000');
+        return;
+      }
+      var name = document.getElementById('donorName').value.trim();
+      var email = document.getElementById('donorEmail').value.trim();
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showError('Format email tidak valid');
+        return;
+      }
+
+      showLoading(true);
+      hideError();
+
+      $.ajax({
+        url: '/api/midtrans/transaction',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ amount: amount, donorName: name || 'Donatur', donorEmail: email || 'donatur@chessreview.app' }),
+        success: function(res) {
+          showLoading(false);
+          if (res.qr_url) {
+            document.getElementById('payForm').classList.add('hidden');
+            document.getElementById('qrDisplay').classList.remove('hidden');
+            document.getElementById('qrImage').src = res.qr_url;
+            document.getElementById('qrOrderId').textContent = res.order_id;
+            pollStatus(res.order_id);
+          } else {
+            showError('Gagal mendapatkan QR code');
+          }
+        },
+        error: function(xhr) {
+          showLoading(false);
+          var msg = 'Gagal membuat QRIS';
+          if (xhr.responseJSON && xhr.responseJSON.error) msg = xhr.responseJSON.error;
+          showError(msg);
+        }
+      });
+    }
+
+    function pollStatus(orderId) {
+      var check = setInterval(function() {
+        $.get('/api/midtrans/status/' + orderId, function(res) {
+          if (res.transaction_status === 'settlement' || res.transaction_status === 'capture') {
+            clearInterval(check);
+            document.getElementById('qrStatus').innerHTML = '<span class="text-[#22C55E] font-semibold"><i class="fas fa-check-circle"></i> Pembayaran berhasil! Terima kasih.</span>';
+          } else if (res.transaction_status === 'expire' || res.transaction_status === 'deny' || res.transaction_status === 'cancel') {
+            clearInterval(check);
+            document.getElementById('qrStatus').innerHTML = '<span class="text-[#EF4444] font-semibold"><i class="fas fa-times-circle"></i> Pembayaran tidak selesai. <button onclick="resetQR()" class="underline">Coba lagi</button></span>';
+          } else if (res.transaction_status === 'pending') {
+            document.getElementById('qrStatus').innerHTML = '<span class="text-[#F59E0B] font-semibold"><i class="fas fa-clock"></i> Menunggu pembayaran...</span>';
+          }
+        });
+      }, 3000);
+      window._qrPoll = check;
+    }
+
+    function resetQR() {
+      if (window._qrPoll) clearInterval(window._qrPoll);
+      document.getElementById('payForm').classList.remove('hidden');
+      document.getElementById('qrDisplay').classList.add('hidden');
+      document.getElementById('qrImage').src = '';
+      document.getElementById('qrStatus').innerHTML = '';
+      hideError();
+    }
+
+    function showLoading(v) {
+      document.getElementById('payBtn').classList.toggle('hidden', v);
+      document.getElementById('qrisLoading').classList.toggle('hidden', !v);
+      document.getElementById('payBtn').disabled = v;
+    }
+
+    function showError(msg) {
+      document.getElementById('qrisError').classList.remove('hidden');
+      document.getElementById('qrisErrorMsg').textContent = msg;
+    }
+
+    function hideError() {
+      document.getElementById('qrisError').classList.add('hidden');
+    }
+
+    document.getElementById('customAmount').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') payWithQRIS();
+    });
+  </script>
+</body>
+</html>

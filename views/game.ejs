@@ -86,6 +86,16 @@
     .player-badge { width: 10px; height: 10px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
 
     .opening-banner { text-align: center; font-size: 0.8rem; color: #b58863; margin-bottom: 4px; min-height: 1.1rem; }
+    .player-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+    .player-avatar-sm { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+    .accuracy-ring { width: 40px; height: 40px; position: relative; }
+    .cls-badge { display: inline-flex; align-items: center; gap: 2px; }
+
+    .highlight-square { position: absolute; pointer-events: none; z-index: 20; border-radius: 0; }
+    .highlight-src { background: rgba(255, 213, 0, 0.55); }
+    .highlight-dst { background: rgba(255, 213, 0, 0.35); }
+    .legal-dot { position: absolute; border-radius: 50%; pointer-events: none; z-index: 25; background: rgba(0, 0, 0, 0.25); }
+    .legal-capture { position: absolute; border-radius: 50%; pointer-events: none; z-index: 25; border: 5px solid rgba(0, 0, 0, 0.2); }
 
     @media (min-width: 640px) {
       .chart-container { height: 250px; }
@@ -126,6 +136,7 @@
 
           <div class="player-row">
             <div class="flex items-center gap-2">
+              <img id="topPlayerAvatar" class="player-avatar hidden" alt="" src="">
               <span class="player-badge bg-gray-900 border border-gray-600"></span>
               <span id="topPlayerName" class="player-name">Hitam</span>
             </div>
@@ -142,6 +153,7 @@
 
           <div class="player-row">
             <div class="flex items-center gap-2">
+              <img id="bottomPlayerAvatar" class="player-avatar hidden" alt="" src="">
               <span class="player-badge bg-white border border-gray-600"></span>
               <span id="bottomPlayerName" class="player-name">Putih</span>
             </div>
@@ -213,26 +225,53 @@
         </div>
 
         <div id="resultsCard" class="card rounded-xl p-4 shadow-lg hidden">
-          <h3 class="text-lg font-semibold text-white mb-3">Hasil Analisa</h3>
-          <div class="grid grid-cols-2 gap-3">
-            <div class="p-3 rounded-lg bg-[#2a2a26]">
-              <p class="text-xs text-gray-400">Akurasi Putih</p>
-              <p id="whiteAccuracy" class="text-xl font-bold text-green-400">-</p>
+          <div class="flex items-center gap-2 mb-4">
+            <span class="text-lg">📊</span>
+            <h3 class="text-lg font-semibold text-white">Hasil Analisa</h3>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 mb-4">
+            <div id="whiteResultBox" class="p-4 rounded-xl bg-[#2a2a26] border border-green-900/40">
+              <div class="flex items-center gap-3">
+                <div class="relative">
+                  <canvas id="whiteAccuracyRing" width="48" height="48"></canvas>
+                </div>
+                <div class="min-w-0">
+                  <p id="whiteAccLabel" class="text-xs text-gray-400 truncate">Putih</p>
+                  <p id="whiteAccuracy" class="text-xl font-bold text-green-400">-</p>
+                </div>
+              </div>
             </div>
-            <div class="p-3 rounded-lg bg-[#2a2a26]">
-              <p class="text-xs text-gray-400">Akurasi Hitam</p>
-              <p id="blackAccuracy" class="text-xl font-bold text-blue-400">-</p>
+            <div id="blackResultBox" class="p-4 rounded-xl bg-[#2a2a26] border border-blue-900/40">
+              <div class="flex items-center gap-3">
+                <div class="relative">
+                  <canvas id="blackAccuracyRing" width="48" height="48"></canvas>
+                </div>
+                <div class="min-w-0">
+                  <p id="blackAccLabel" class="text-xs text-gray-400 truncate">Hitam</p>
+                  <p id="blackAccuracy" class="text-xl font-bold text-blue-400">-</p>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="mt-3 p-3 rounded-lg bg-[#2a2a26]">
-            <p class="text-xs text-gray-400 mb-1">Ringkasan Langkah</p>
-            <div id="moveSummary" class="grid grid-cols-2 gap-x-3 gap-y-1 text-xs"></div>
+
+          <div class="p-4 rounded-xl bg-[#2a2a26] mb-4">
+            <p class="text-xs text-gray-400 mb-3">Ringkasan Langkah</p>
+            <div id="moveSummary" class="grid grid-cols-2 gap-4"></div>
           </div>
-          <div class="mt-3 p-3 rounded-lg bg-[#2a2a26]">
-            <p class="text-xs text-gray-400">Evaluasi Akhir</p>
-            <p id="finalEval" class="text-lg font-bold text-white">-</p>
+
+          <div class="grid grid-cols-2 gap-3 mb-4">
+            <div class="p-3 rounded-xl bg-[#2a2a26]">
+              <p class="text-xs text-gray-400">Evaluasi Akhir</p>
+              <p id="finalEval" class="text-lg font-bold text-white mt-0.5">-</p>
+            </div>
+            <div class="p-3 rounded-xl bg-[#2a2a26]">
+              <p class="text-xs text-gray-400">Jumlah Langkah</p>
+              <p id="totalMovesDisplay" class="text-lg font-bold text-white mt-0.5">-</p>
+            </div>
           </div>
-          <div class="mt-3" id="blunderList"></div>
+
+          <div id="blunderList"></div>
         </div>
       </div>
     </div>
@@ -332,10 +371,41 @@
       return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
+    let boardOrientation = 'white';
+    let whiteAvatarUrl = '', blackAvatarUrl = '';
+
+    function fetchPlayerProfile(username, isWhite) {
+      if (!username || username === 'Putih' || username === 'Hitam') return;
+      const key = isWhite ? 'white' : 'black';
+      $.getJSON(`/api/proxy/player/${encodeURIComponent(username)}`)
+        .done(data => {
+          if (data.avatar) {
+            if (isWhite) whiteAvatarUrl = data.avatar;
+            else blackAvatarUrl = data.avatar;
+            updateAvatarDisplay();
+          }
+        })
+        .fail(() => {});
+    }
+
+    function updateAvatarDisplay() {
+      const $ba = $('#bottomPlayerAvatar'), $ta = $('#topPlayerAvatar');
+      if (whiteAvatarUrl) $('#infoWhiteAvatar').attr('src', whiteAvatarUrl).removeClass('hidden');
+      if (blackAvatarUrl) $('#infoBlackAvatar').attr('src', blackAvatarUrl).removeClass('hidden');
+      const isFlipped = boardOrientation === 'black';
+      const bottomUrl = isFlipped ? blackAvatarUrl : whiteAvatarUrl;
+      const topUrl = isFlipped ? whiteAvatarUrl : blackAvatarUrl;
+      if (bottomUrl) { $ba.attr('src', bottomUrl).removeClass('hidden'); } else { $ba.addClass('hidden'); }
+      if (topUrl) { $ta.attr('src', topUrl).removeClass('hidden'); } else { $ta.addClass('hidden'); }
+    }
+
     if (pgnValid) {
+      fetchPlayerProfile(whiteName, true);
+      fetchPlayerProfile(blackName, false);
+
       $('#infoContent').html(`
-        <div class="flex items-center gap-2"><span class="text-green-400 font-semibold">Putih:</span><span class="text-white">${escapeHtml(whiteName)}</span></div>
-        <div class="flex items-center gap-2"><span class="text-blue-400 font-semibold">Hitam:</span><span class="text-white">${escapeHtml(blackName)}</span></div>
+        <div class="flex items-center gap-2"><span class="text-green-400 font-semibold">Putih:</span><img id="infoWhiteAvatar" class="player-avatar-sm hidden" alt=""><span class="text-white">${escapeHtml(whiteName)}</span></div>
+        <div class="flex items-center gap-2"><span class="text-blue-400 font-semibold">Hitam:</span><img id="infoBlackAvatar" class="player-avatar-sm hidden" alt=""><span class="text-white">${escapeHtml(blackName)}</span></div>
         <div class="flex items-center gap-2"><span class="text-gray-400">Hasil:</span><span class="text-white font-bold">${escapeHtml(result)}</span></div>
         <div class="flex items-center gap-2"><span class="text-gray-400">Tanggal:</span><span class="text-white">${escapeHtml(date)}</span></div>
         <div class="flex items-center gap-2"><span class="text-gray-400">Event:</span><span class="text-white">${escapeHtml(event)}</span></div>
@@ -344,10 +414,8 @@
       `);
     }
 
-    $('#bottomPlayerName').text(whiteName);
-    $('#topPlayerName').text(blackName);
-    $('#bottomPlayerMeta').text(whiteElo ? `(${whiteElo})` : '');
-    $('#topPlayerMeta').text(blackElo ? `(${blackElo})` : '');
+    boardOrientation = 'white';
+    swapPlayerDisplay();
 
     // ============================================================
     // 2. OPENING BOOK (loaded from server: data/openings.json)
@@ -430,7 +498,6 @@
     // 3. BOARD + NAVIGATION (responsive sizing)
     // ============================================================
     let currentPly = 0;
-    let boardOrientation = 'white';
     let board = null;
 
     function computeBoardWidth() {
@@ -450,13 +517,18 @@
         board = Chessboard('board', {
           position: pgnValid ? fens[0] : 'start',
           pieceTheme: '/images/{piece}.png',
-          boardWidth: computeBoardWidth()
+          boardWidth: computeBoardWidth(),
+          draggable: pgnValid,
+          onDragStart: pgnValid ? onUserDragStart : null,
+          onDrop: pgnValid ? onUserDrop : null,
+          onSnapEnd: onUserSnapEnd,
         });
         // Chessboard replaces #board content, re-create the arrow SVG overlay
         if (!$('#boardArrowLayer').length) {
           $('#board').append('<svg id="boardArrowLayer" xmlns="http://www.w3.org/2000/svg" style="position: absolute; top: 0; left: 0; pointer-events: none; z-index: 50;"></svg>');
         }
         positionArrowLayer();
+        setupClickToMove();
       } catch (e) {
         console.error('Chessboard init error:', e);
         $('#board').html('<p class="text-red-400 p-4 text-sm">Gagal memuat papan catur.</p>');
@@ -641,7 +713,7 @@
       $svg.find('.arrow-group').remove();
       if (!$('#arrowToggle').is(':checked')) return;
 
-      const suggestion = bestMoves[currentPly];
+      const suggestion = window._userSuggestion || bestMoves[currentPly];
       if (!suggestion || !suggestion.from || !suggestion.to) return;
 
       const boardWidthPx = $('#board').width();
@@ -697,8 +769,16 @@
     // ============================================================
     // 7. NAVIGATION
     // ============================================================
+    function clearUserHighlights() {
+      selectedSquare = null;
+      userFen = null;
+      window._userSuggestion = null;
+      $('#board').find('.highlight-square, .legal-dot, .legal-capture').remove();
+    }
+
     function updateBoard(playSound) {
       if (board && pgnValid) board.position(fens[currentPly]);
+      clearUserHighlights();
       $('#moveCounter').text(`${currentPly} / ${totalMoves}`);
       renderMoveList();
       updateOpeningInfo(currentPly);
@@ -711,6 +791,11 @@
       updateEvalBar(evals[currentPly] !== undefined ? evals[currentPly] : null);
 
       if (playSound) playMoveSound();
+
+      if (currentPly > 0 && pgnValid) {
+        const lastMove = history[currentPly - 1];
+        if (lastMove) highlightLastMove(lastMove.from, lastMove.to);
+      }
     }
 
     function goToPly(ply, playSound) {
@@ -733,20 +818,40 @@
       $('#barNextBtn').prop('disabled', currentPly >= totalMoves);
     }
 
+    function swapPlayerDisplay() {
+      const isFlipped = boardOrientation === 'black';
+      const bottomName = isFlipped ? blackName : whiteName;
+      const topName = isFlipped ? whiteName : blackName;
+      const bottomElo = isFlipped ? blackElo : whiteElo;
+      const topElo = isFlipped ? whiteElo : blackElo;
+      const bottomAvatar = isFlipped ? blackAvatarUrl : whiteAvatarUrl;
+      const topAvatar = isFlipped ? whiteAvatarUrl : blackAvatarUrl;
+
+      $('#bottomPlayerName').text(bottomName);
+      $('#bottomPlayerMeta').text(bottomElo ? `(${bottomElo})` : '');
+      $('#topPlayerName').text(topName);
+      $('#topPlayerMeta').text(topElo ? `(${topElo})` : '');
+
+      const $ba = $('#bottomPlayerAvatar');
+      const $ta = $('#topPlayerAvatar');
+      if (bottomAvatar) { $ba.attr('src', bottomAvatar).removeClass('hidden'); } else { $ba.addClass('hidden'); }
+      if (topAvatar) { $ta.attr('src', topAvatar).removeClass('hidden'); } else { $ta.addClass('hidden'); }
+    }
+
     function rotateBoard() {
       if (!board) return;
       boardOrientation = boardOrientation === 'white' ? 'black' : 'white';
       board.orientation(boardOrientation);
-      if (boardOrientation === 'black') {
-        $('#bottomPlayerName').text(blackName); $('#bottomPlayerMeta').text(blackElo ? `(${blackElo})` : '');
-        $('#topPlayerName').text(whiteName); $('#topPlayerMeta').text(whiteElo ? `(${whiteElo})` : '');
-      } else {
-        $('#bottomPlayerName').text(whiteName); $('#bottomPlayerMeta').text(whiteElo ? `(${whiteElo})` : '');
-        $('#topPlayerName').text(blackName); $('#topPlayerMeta').text(blackElo ? `(${blackElo})` : '');
-      }
+      swapPlayerDisplay();
       positionArrowLayer();
       drawSuggestionArrow();
       drawSquareBadge(currentPly);
+      const evals = window.evaluations || [];
+      updateEvalBar(evals[currentPly] !== undefined ? evals[currentPly] : null);
+      // Reposition overlays after rotation
+      if (selectedSquare) {
+        showLegalMoves(selectedSquare);
+      }
     }
 
     $('#barPrevBtn').on('click', () => goToPly(currentPly - 1));
@@ -786,7 +891,8 @@
         $text.text('?');
         return;
       }
-      const clamped = Math.max(-1000, Math.min(1000, score));
+      let clamped = Math.max(-1000, Math.min(1000, score));
+      if (boardOrientation === 'black') clamped = -clamped;
       const pct = Math.round(50 + (clamped / 2000) * 100);
       const height = Math.max(0, Math.min(100, pct));
       $fill.css('height', height + '%')
@@ -994,7 +1100,303 @@
     }
 
     // ============================================================
-    // 9. RESULTS — chess.com-style win% based accuracy
+    // 9. USER INTERACTION — Drag & Drop / Click-to-Move
+    // ============================================================
+    let selectedSquare = null;
+    let userFen = null;
+    let userMoveWorker = null;
+    let userMoveWorkerReady = false;
+    let currentMultiPv = [];
+
+    function initUserMoveWorker() {
+      if (typeof Worker === 'undefined') return;
+      try {
+        userMoveWorker = new Worker('/cdn/stockfish.js');
+        userMoveWorker.onmessage = function(e) {
+          if (typeof e.data === 'string' && e.data.trim() === 'uciok') userMoveWorkerReady = true;
+        };
+        userMoveWorker.postMessage('uci');
+      } catch (e) {}
+    }
+
+    function analyzeMultiPv(fen) {
+      return new Promise((resolve) => {
+        if (!userMoveWorker || !userMoveWorkerReady) { resolve([]); return; }
+        const pvs = {};
+        let settled = false;
+        const timer = setTimeout(() => { settled = true; resolve(Object.values(pvs).sort((a,b) => a.idx - b.idx)); }, 12000);
+        const handler = function(e) {
+          const line = e.data;
+          if (typeof line !== 'string') return;
+          const mpv = line.match(/multipv\s+(\d+).*?score cp\s+(-?\d+).*?pv\s+(\S+)/);
+          if (mpv) {
+            const idx = parseInt(mpv[1]);
+            pvs[idx] = { idx, score: parseInt(mpv[2]), move: mpv[3] };
+          }
+          const mate = line.match(/multipv\s+(\d+).*?score mate\s+(-?\d+).*?pv\s+(\S+)/);
+          if (mate) {
+            const idx = parseInt(mate[1]);
+            pvs[idx] = { idx, score: parseInt(mate[2]) > 0 ? 10000 : -10000, move: mate[3] };
+          }
+          if (line.startsWith('bestmove') && !settled) {
+            settled = true; clearTimeout(timer);
+            userMoveWorker.removeEventListener('message', handler);
+            resolve(Object.values(pvs).sort((a,b) => a.idx - b.idx));
+          }
+        };
+        userMoveWorker.addEventListener('message', handler);
+        userMoveWorker.postMessage('ucinewgame');
+        userMoveWorker.postMessage('setoption name MultiPV value 3');
+        userMoveWorker.postMessage('position fen ' + fen);
+        userMoveWorker.postMessage('go depth 10');
+      });
+    }
+
+    function evaluateUserMove(fen) {
+      return new Promise((resolve) => {
+        if (!userMoveWorker || !userMoveWorkerReady) { resolve({ score: 0, bestMove: null }); return; }
+        let bestScore = null, bestMoveUci = null, settled = false;
+        const timer = setTimeout(() => { settled = true; resolve({ score: bestScore || 0, bestMove: bestMoveUci }); }, 8000);
+        const handler = function(e) {
+          const line = e.data;
+          if (typeof line !== 'string') return;
+          const cp = line.match(/info.*score cp\s+(-?\d+)/);
+          if (cp) bestScore = parseInt(cp[1], 10);
+          const mate = line.match(/info.*score mate\s+(-?\d+)/);
+          if (mate) bestScore = mate[1] > 0 ? 10000 : -10000;
+          if (line.startsWith('bestmove') && !settled) {
+            settled = true; clearTimeout(timer);
+            const p = line.split(' ');
+            bestMoveUci = p[1] && p[1] !== '(none)' ? p[1] : null;
+            userMoveWorker.removeEventListener('message', handler);
+            resolve({ score: bestScore || 0, bestMove: bestMoveUci });
+          }
+        };
+        userMoveWorker.addEventListener('message', handler);
+        userMoveWorker.postMessage('ucinewgame');
+        userMoveWorker.postMessage('setoption name MultiPV value 1');
+        userMoveWorker.postMessage('position fen ' + fen);
+        userMoveWorker.postMessage('go depth 10');
+      });
+    }
+
+    function squareToFileRank(sq) {
+      return { file: FILES.indexOf(sq[0]), rank: parseInt(sq[1], 10) };
+    }
+
+    function squareToPixel(sq, boardWidthPx) {
+      const fr = squareToFileRank(sq);
+      const cell = boardWidthPx / 8;
+      const x = (boardOrientation === 'black' ? (7 - fr.file) : fr.file) * cell;
+      const y = (boardOrientation === 'black' ? (fr.rank - 1) : (8 - fr.rank)) * cell;
+      return { x, y, cell };
+    }
+
+    function clearLegalHighlights() {
+      $('#board').find('.highlight-square, .legal-dot, .legal-capture, .pv-badge').remove();
+    }
+
+    function highlightSquare(sq, className) {
+      if (!sq) return;
+      const bw = $('#board').width();
+      const p = squareToPixel(sq, bw);
+      $('<div>', { class: 'highlight-square ' + className, css: {
+        left: p.x, top: p.y, width: p.cell, height: p.cell
+      }}).appendTo('#board');
+    }
+
+    function getCurrentSanSeq() {
+      if (userFen) return [];
+      const s = [];
+      for (let i = 0; i < currentPly; i++) s.push(history[i].san);
+      return s;
+    }
+
+    function getBookSquares(legalMoves) {
+      const sanSeq = getCurrentSanSeq();
+      if (sanSeq.length === 0) return {};
+      const books = {};
+      legalMoves.forEach(m => {
+        const test = [...sanSeq, m.san];
+        if (findLongestOpeningMatch(test)) books[m.to] = true;
+      });
+      return books;
+    }
+
+    function placeOverlay(sq, className, style) {
+      const bw = $('#board').width();
+      const p = squareToPixel(sq, bw);
+      $('<div>', { class: className, css: Object.assign({
+        position: 'absolute', pointerEvents: 'none', zIndex: 25
+      }, style) }).appendTo('#board');
+    }
+
+    function showLegalMoves(sq) {
+      clearLegalHighlights();
+      const c = new Chess();
+      c.load(userFen || fens[currentPly]);
+      const moves = c.moves({ square: sq, verbose: true });
+      const bw = $('#board').width();
+      const cell = bw / 8;
+
+      highlightSquare(sq, 'highlight-src');
+
+      moves.forEach(m => {
+        const p = squareToPixel(m.to, bw);
+        if (m.captured) {
+          placeOverlay(m.to, 'legal-capture', {
+            left: p.x - 2, top: p.y - 2, width: p.cell + 4, height: p.cell + 4,
+            borderRadius: '50%', border: '5px solid rgba(0,0,0,0.2)'
+          });
+        } else {
+          const size = cell * 0.22;
+          placeOverlay(m.to, 'legal-dot', {
+            left: p.x + (cell - size) / 2, top: p.y + (cell - size) / 2,
+            width: size, height: size, borderRadius: '50%', background: 'rgba(0,0,0,0.3)'
+          });
+        }
+      });
+      return moves;
+    }
+
+    function showMultiPvIcons(pvs, legalSquares, bookSquares) {
+      $('#board').find('.pv-badge').remove();
+      if (!pvs || pvs.length === 0) return;
+      const bw = $('#board').width();
+      const cell = bw / 8;
+      pvs.forEach((pv, i) => {
+        if (!pv || !pv.move) return;
+        const toSq = pv.move.slice(2, 4);
+        if (!legalSquares.includes(toSq)) return;
+        const isBook = bookSquares && bookSquares[toSq];
+        const label = isBook ? '📖' : (['★','👍','✔'][i] || '');
+        const color = isBook ? '#b58863' : ['#81b64c','#81b64c','#95b776'][i];
+        const p = squareToPixel(toSq, bw);
+        $('<div>', { class: 'pv-badge', css: {
+          position: 'absolute',
+          left: p.x + cell/2, top: p.y + 2,
+          fontSize: Math.max(16, cell * 0.38) + 'px', fontWeight: 'bold',
+          color: color, pointerEvents: 'none', zIndex: 35, lineHeight: 1,
+          textShadow: '0 1px 4px rgba(0,0,0,0.95)',
+          transform: 'translate(-50%, 0)'
+        }}).text(label).appendTo('#board');
+      });
+    }
+
+    function highlightLastMove(from, to) {
+      clearLegalHighlights();
+      if (from) highlightSquare(from, 'highlight-src');
+      if (to) highlightSquare(to, 'highlight-dst');
+    }
+
+    async function onUserMove(from, to) {
+      const c = new Chess();
+      c.load(userFen || fens[currentPly]);
+      let move;
+      try { move = c.move({ from, to, promotion: 'q' }, { sloppy: true }); } catch (e) {}
+      if (!move) return false;
+
+      playMoveSound();
+      userFen = c.fen();
+      board.position(userFen);
+      highlightLastMove(from, to);
+      const playedUci = from + to;
+      let type = 'good';
+      let bestScore = null;
+
+      if (currentMultiPv && currentMultiPv.length > 0) {
+        if (currentMultiPv[0] && playedUci === currentMultiPv[0].move) { type = 'best'; bestScore = currentMultiPv[0].score; }
+        else if (currentMultiPv[1] && playedUci === currentMultiPv[1].move) { type = 'excellent'; bestScore = currentMultiPv[1].score; }
+        else if (currentMultiPv[2] && playedUci === currentMultiPv[2].move) { type = 'good'; bestScore = currentMultiPv[2].score; }
+        else {
+          bestScore = currentMultiPv[0] ? currentMultiPv[0].score : 0;
+          const isWhiteSide = currentMultiPv[0] ? true : true;
+          const mvEval = window.evaluations && window.evaluations[currentPly];
+          const loss = Math.abs((bestScore || 0) - (mvEval || 0));
+          if (loss <= 30) type = 'excellent';
+          else if (loss <= 110) type = 'good';
+          else if (loss <= 180) type = 'inaccuracy';
+          else if (loss <= 350) type = 'mistake';
+          else type = 'blunder';
+        }
+        if (currentMultiPv[0] && currentMultiPv[0].move) {
+          window._userSuggestion = { from: currentMultiPv[0].move.slice(0, 2), to: currentMultiPv[0].move.slice(2, 4) };
+        }
+      } else {
+        $('#statusBadge').text('Menganalisis...').removeClass('text-red-400').addClass('text-green-400');
+        const result = await evaluateUserMove(userFen);
+        $('#statusBadge').text('Siap').removeClass('text-green-400');
+        bestScore = result.score;
+        if (result.bestMove && playedUci === result.bestMove) type = 'best';
+        if (result.bestMove) {
+          window._userSuggestion = { from: result.bestMove.slice(0, 2), to: result.bestMove.slice(2, 4) };
+        }
+      }
+
+      const meta = MOVE_ICONS[type] || MOVE_ICONS.good;
+      $('#moveClassifyCallout').removeClass('hidden')
+        .html(`<span class="${meta.cls}">${move.san}  ${meta.icon}  ${meta.label}</span>`)
+        .css('background', 'rgba(30,30,27,0.9)');
+      drawSuggestionArrow();
+      updateEvalBar(bestScore);
+      return true;
+    }
+
+    function onUserDragStart(source, piece, position, orientation) {
+      if (analysisRunning) return false;
+      currentMultiPv = [];
+      const moves = showLegalMoves(source);
+      const fen = userFen || fens[currentPly];
+      analyzeMultiPv(fen).then(pvs => { currentMultiPv = pvs; });
+      return true;
+    }
+
+    function onUserDrop(source, target, piece, newPos, oldPos, orientation) {
+      clearLegalHighlights();
+      onUserMove(source, target).then(ok => {
+        if (!ok) board.position(userFen || fens[currentPly]);
+      });
+      return true;
+    }
+
+    function onUserSnapEnd() {}
+
+    function setupClickToMove() {
+      $(document).on('click', '.square-55d63', function(e) {
+        if (analysisRunning || !pgnValid) return;
+        const bw = $('#board').width();
+        const cell = bw / 8;
+        const off = $('#board').offset();
+        const rx = e.pageX - off.left, ry = e.pageY - off.top;
+        const f = Math.floor(rx / cell), r = Math.floor(ry / cell);
+        if (f < 0 || f > 7 || r < 0 || r > 7) return;
+        const sq = FILES[boardOrientation === 'black' ? 7 - f : f] + (boardOrientation === 'black' ? r + 1 : 8 - r);
+
+        if (!selectedSquare) {
+          const c = new Chess();
+          c.load(userFen || fens[currentPly]);
+          if (!c.get(sq)) return;
+          selectedSquare = sq;
+          currentMultiPv = [];
+          const moves = showLegalMoves(sq);
+          const fen = userFen || fens[currentPly];
+          analyzeMultiPv(fen).then(pvs => { currentMultiPv = pvs; });
+        } else {
+          const src = selectedSquare;
+          selectedSquare = null;
+          clearLegalHighlights();
+          if (sq === src) return;
+          onUserMove(src, sq).then(ok => {
+            if (!ok) board.position(userFen || fens[currentPly]);
+          });
+        }
+      });
+    }
+
+    initUserMoveWorker();
+
+    // ============================================================
+    // 10. RESULTS — chess.com-style win% based accuracy
     // ============================================================
     function cpToWinPercent(cp) {
       const capped = Math.max(-1000, Math.min(1000, cp));
@@ -1008,20 +1410,22 @@
 
     function displayResults() {
       let whiteAccs = [], blackAccs = [];
-      let summary = { brilliant:0, great:0, best:0, excellent:0, good:0, inaccuracy:0, mistake:0, blunder:0, missed:0 };
+      let whiteSummary = { brilliant:0, great:0, best:0, excellent:0, good:0, inaccuracy:0, mistake:0, blunder:0, missed:0 };
+      let blackSummary = { brilliant:0, great:0, best:0, excellent:0, good:0, inaccuracy:0, mistake:0, blunder:0, missed:0 };
       let blunderList = [];
 
       for (let ply = 1; ply <= totalMoves; ply++) {
         const info = classifications[ply];
         if (!info) continue;
         if (info.type === 'book') continue;
-        summary[info.type] = (summary[info.type] || 0) + 1;
+        const isWhite = (ply % 2 === 1);
+        if (isWhite) whiteSummary[info.type] = (whiteSummary[info.type] || 0) + 1;
+        else blackSummary[info.type] = (blackSummary[info.type] || 0) + 1;
 
         const evalBefore = evaluations[ply - 1];
         const evalAfter = evaluations[ply];
         if (evalBefore === undefined || evalAfter === undefined) continue;
 
-        const isWhite = (ply % 2 === 1);
         const wpBefore = cpToWinPercent(isWhite ? evalBefore : -evalBefore);
         const wpAfter = cpToWinPercent(isWhite ? evalAfter : -evalAfter);
         const diff = Math.max(0, wpBefore - wpAfter);
@@ -1036,17 +1440,41 @@
       }
 
       function avg(arr) { return arr.length ? arr.reduce((a,b) => a+b, 0) / arr.length : 100; }
-      $('#whiteAccuracy').text(avg(whiteAccs).toFixed(1) + '%');
-      $('#blackAccuracy').text(avg(blackAccs).toFixed(1) + '%');
+      const wAcc = avg(whiteAccs), bAcc = avg(blackAccs);
+      $('#whiteAccuracy').text(wAcc.toFixed(1) + '%');
+      $('#blackAccuracy').text(bAcc.toFixed(1) + '%');
+      $('#whiteAccLabel').text(escapeHtml(whiteName));
+      $('#blackAccLabel').text(escapeHtml(blackName));
+      $('#totalMovesDisplay').text(totalMoves);
+
+      function drawAccuracyRing(canvasId, pct, color) {
+        const c = document.getElementById(canvasId);
+        if (!c || !c.getContext) return;
+        const ctx = c.getContext('2d');
+        const cx = 24, cy = 24, r = 19, w = 3.5;
+        ctx.clearRect(0, 0, 48, 48);
+        ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = w; ctx.stroke();
+        const end = -Math.PI/2 + (Math.PI * 2 * pct / 100);
+        ctx.beginPath(); ctx.arc(cx, cy, r, -Math.PI/2, end); ctx.strokeStyle = color; ctx.lineWidth = w; ctx.lineCap = 'round'; ctx.stroke();
+      }
+      drawAccuracyRing('whiteAccuracyRing', wAcc, '#22c55e');
+      drawAccuracyRing('blackAccuracyRing', bAcc, '#3b82f6');
 
       const summaryOrder = ['brilliant','great','best','excellent','good','inaccuracy','mistake','blunder','missed'];
-      let summaryHtml = '';
-      summaryOrder.forEach(key => {
-        if (!summary[key]) return;
-        const meta = MOVE_ICONS[key];
-        summaryHtml += `<div class="flex items-center gap-1 ${meta.cls}"><span>${meta.icon}</span><span>${meta.label}: ${summary[key]}</span></div>`;
-      });
-      $('#moveSummary').html(summaryHtml || '<p class="text-gray-500 col-span-2">Tidak ada data</p>');
+      function renderSummary(summary, label, color) {
+        let html = `<div class="text-xs font-semibold mb-2" style="color:${color}">${escapeHtml(label)}</div>`;
+        let hasItems = false;
+        summaryOrder.forEach(key => {
+          if (!summary[key]) return;
+          hasItems = true;
+          const meta = MOVE_ICONS[key];
+          html += `<div class="flex items-center justify-between py-0.5 ${meta.cls}"><span class="flex items-center gap-1.5 text-xs"><span>${meta.icon}</span><span>${meta.label}</span></span><span class="font-bold text-white text-xs">${summary[key]}</span></div>`;
+        });
+        if (!hasItems) html += '<p class="text-xs text-gray-500">—</p>';
+        return html;
+      }
+      const sumHtml = `<div class="p-3 rounded-lg bg-[#1e1e1b]">${renderSummary(whiteSummary, whiteName, '#22c55e')}</div><div class="p-3 rounded-lg bg-[#1e1e1b]">${renderSummary(blackSummary, blackName, '#60a5fa')}</div>`;
+      $('#moveSummary').html(sumHtml);
 
       const finalScore = evaluations[evaluations.length - 1];
       let finalText;
@@ -1060,12 +1488,20 @@
       blunderList.sort((a,b) => a.ply - b.ply);
       let blunderHtml = '';
       if (blunderList.length > 0) {
-        blunderHtml = '<p class="text-sm text-gray-400 mb-2">Blunder, Mistake & Missed Win:</p>';
+        blunderHtml = '<div class="p-4 rounded-xl bg-[#2a2a26]"><p class="text-xs text-gray-400 mb-3">🔥 Momen Kritis</p>';
         blunderList.slice(0, 8).forEach(b => {
-          blunderHtml += `<p class="text-xs cls-${b.type.toLowerCase().replace(' ','')}">Langkah ${Math.ceil(b.ply/2)} (${escapeHtml(b.player)}): ${escapeHtml(b.move)} — ${b.icon} ${escapeHtml(b.type)}</p>`;
+          const cls = b.type.toLowerCase().replace(/ /g, '');
+          const colorMap = {blunder:'text-red-400',mistake:'text-orange-400',missed:'text-red-400'};
+          blunderHtml += `<div class="flex items-center justify-between py-1.5 border-b border-white/5 last:border-0">
+            <span class="text-xs text-gray-400">Langkah ${Math.ceil(b.ply/2)}</span>
+            <span class="text-xs text-gray-300">${escapeHtml(b.player)}</span>
+            <span class="text-xs font-mono text-gray-200">${escapeHtml(b.move)}</span>
+            <span class="text-xs ${colorMap[cls] || 'text-gray-400'} font-semibold">${b.icon} ${escapeHtml(b.type)}</span>
+          </div>`;
         });
+        blunderHtml += '</div>';
       } else {
-        blunderHtml = '<p class="text-sm text-green-400">Tidak ada blunder atau mistake!</p>';
+        blunderHtml = '<div class="p-4 rounded-xl bg-[#2a2a26] text-center"><p class="text-sm text-green-400">✅ Tidak ada blunder atau mistake!</p><p class="text-xs text-gray-500 mt-1">Permainan yang solid!</p></div>';
       }
       $('#blunderList').html(blunderHtml);
 
@@ -1073,7 +1509,7 @@
     }
 
     // ============================================================
-    // 10. CHART
+    // 11. CHART
     // ============================================================
     let chartInstance = null;
     function drawChart(evals) {
@@ -1119,7 +1555,7 @@
     }
 
     // ============================================================
-    // 11. INIT
+    // 12. INIT
     // ============================================================
     openingsReady.then(() => updateOpeningInfo(0));
     renderMoveList();

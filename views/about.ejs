@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About - Chess Game Review</title>
+  <meta name="description" content="Tentang Chess Game Review. Misi, visi, teknologi, dan statistik platform analisis catur gratis.">
+  <link rel="icon" href="/images/wN.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="/cdn/tailwind"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: #0B1220; color: #F8FAFC; -webkit-font-smoothing: antialiased; }
+    ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: #0B1220; } ::-webkit-scrollbar-thumb { background: #22C55E; border-radius: 3px; }
+    ::selection { background: rgba(34,197,94,0.3); }
+    .navbar { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 1rem 0; background: rgba(11,18,32,0.75); backdrop-filter: blur(20px) saturate(1.4); border-bottom: 1px solid rgba(255,255,255,0.04); box-shadow: 0 4px 40px rgba(0,0,0,0.3); }
+    .nav-link { position: relative; color: rgba(248,250,252,0.6); transition: color 0.3s ease; text-decoration: none; }
+    .nav-link::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 0; height: 2px; background: #22C55E; transition: width 0.3s ease; border-radius: 1px; }
+    .nav-link:hover { color: #F8FAFC; } .nav-link:hover::after { width: 100%; }
+    .btn-primary { display: inline-flex; align-items: center; gap: 0.5rem; background: linear-gradient(135deg, #22C55E, #16a34a); color: white; font-weight: 600; font-family: inherit; padding: 0.75rem 1.75rem; border-radius: 12px; border: none; cursor: pointer; transition: all 0.3s ease; text-decoration: none; }
+    .btn-primary:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 30px rgba(34,197,94,0.25); }
+    .glass { background: rgba(17,24,39,0.6); backdrop-filter: blur(20px) saturate(1.3); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; }
+    .glass-strong { background: rgba(17,24,39,0.85); backdrop-filter: blur(30px) saturate(1.5); border: 1px solid rgba(255,255,255,0.06); border-radius: 24px; }
+    .stat-number { font-size: 3rem; font-weight: 800; background: linear-gradient(135deg, #22C55E, #16a34a); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; }
+    .tech-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 16px; padding: 1.5rem; text-align: center; transition: all 0.3s ease; }
+    .tech-card:hover { background: rgba(255,255,255,0.04); border-color: rgba(34,197,94,0.15); transform: translateY(-4px); }
+    .timeline-dot { width: 14px; height: 14px; border-radius: 50%; background: #22C55E; border: 3px solid rgba(34,197,94,0.2); flex-shrink: 0; margin-top: 4px; }
+    @media (max-width: 768px) { .stat-number { font-size: 2.5rem; } }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2.5 no-underline">
+        <span class="text-2xl" style="line-height:1">♟</span>
+        <span class="text-lg font-bold text-[#F8FAFC] tracking-tight">Chess<span class="text-[#22C55E]">Review</span></span>
+      </a>
+      <div class="hidden md:flex items-center gap-1">
+        <a href="/" class="nav-link px-3 py-2 text-sm"><i class="fas fa-home"></i> Home</a>
+        <a href="/support" class="nav-link px-3 py-2 text-sm"><i class="fas fa-heart"></i> Support</a>
+        <a href="/faq" class="nav-link px-3 py-2 text-sm"><i class="fas fa-question-circle"></i> FAQ</a>
+        <a href="/about" class="nav-link px-3 py-2 text-sm" style="color:#F8FAFC"><i class="fas fa-info-circle"></i> About</a>
+      </div>
+        <a href="/" class="hidden md:inline-flex btn-primary text-sm px-5 py-2.5"><span><i class="fas fa-play"></i></span> Start Analysis</a>
+    </div>
+  </nav>
+
+  <section class="pt-32 pb-20 sm:pb-28">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <!-- Header -->
+      <div class="text-center max-w-3xl mx-auto mb-16">
+        <span class="inline-block text-xs font-semibold tracking-widest text-[#22C55E] uppercase mb-4">About</span>
+        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#F8FAFC] tracking-tight">About <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#22C55E] to-[#16a34a]">Chess Review</span></h1>
+        <p class="text-[rgba(248,250,252,0.4)] text-base sm:text-lg mt-4 leading-relaxed">Chess Review lahir dari kecintaan terhadap catur dan keinginan untuk menyediakan alat analisis gratis yang setara dengan platform premium.</p>
+      </div>
+
+      <!-- Mission, Vision, Technology -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-16">
+        <div class="glass p-6 sm:p-8"><div class="w-14 h-14 rounded-xl bg-[rgba(34,197,94,0.08)] flex items-center justify-center text-2xl mb-4"><i class="fas fa-bullseye"></i></div><h2 class="text-lg font-bold text-[#F8FAFC] mb-2">Mission</h2><p class="text-[rgba(248,250,252,0.4)] text-sm leading-relaxed">Menyediakan analisis catur berkualitas tinggi secara gratis untuk semua pemain di seluruh dunia.</p></div>
+        <div class="glass p-6 sm:p-8"><div class="w-14 h-14 rounded-xl bg-[rgba(34,197,94,0.08)] flex items-center justify-center text-2xl mb-4"><i class="fas fa-eye"></i></div><h2 class="text-lg font-bold text-[#F8FAFC] mb-2">Vision</h2><p class="text-[rgba(248,250,252,0.4)] text-sm leading-relaxed">Menjadi platform analisis catur berbasis web terbaik yang dapat diakses siapa pun, kapan pun.</p></div>
+        <div class="glass p-6 sm:p-8"><div class="w-14 h-14 rounded-xl bg-[rgba(34,197,94,0.08)] flex items-center justify-center text-2xl mb-4"><i class="fas fa-cog"></i></div><h2 class="text-lg font-bold text-[#F8FAFC] mb-2">Technology</h2><p class="text-[rgba(248,250,252,0.4)] text-sm leading-relaxed">Dibangun dengan teknologi modern yang berjalan sepenuhnya di browser untuk kecepatan dan privasi maksimal.</p></div>
+      </div>
+
+      <!-- Tech Stack -->
+      <div class="max-w-4xl mx-auto mb-16">
+        <h2 class="text-xl font-bold text-center text-[#F8FAFC] mb-8">Technology Stack</h2>
+        <div class="grid grid-cols-3 sm:grid-cols-6 gap-4">
+          <div class="tech-card"><div class="text-2xl mb-2"><i class="fas fa-palette"></i></div><p class="text-xs text-[rgba(248,250,252,0.5)] font-medium">Tailwind CSS</p></div>
+          <div class="tech-card"><div class="text-2xl mb-2"><i class="fas fa-brain"></i></div><p class="text-xs text-[rgba(248,250,252,0.5)] font-medium">Stockfish</p></div>
+          <div class="tech-card"><div class="text-2xl mb-2"><i class="fas fa-chess-knight"></i></div><p class="text-xs text-[rgba(248,250,252,0.5)] font-medium">Chess.js</p></div>
+          <div class="tech-card"><div class="text-2xl mb-2"><i class="fas fa-bolt"></i></div><p class="text-xs text-[rgba(248,250,252,0.5)] font-medium">JavaScript</p></div>
+          <div class="tech-card"><div class="text-2xl mb-2"><i class="fas fa-globe"></i></div><p class="text-xs text-[rgba(248,250,252,0.5)] font-medium">WebAssembly</p></div>
+          <div class="tech-card"><div class="text-2xl mb-2"><i class="fab fa-node-js"></i></div><p class="text-xs text-[rgba(248,250,252,0.5)] font-medium">Node.js</p></div>
+        </div>
+      </div>
+
+      <!-- Timeline -->
+      <div class="max-w-3xl mx-auto mb-16">
+        <h2 class="text-xl font-bold text-center text-[#F8FAFC] mb-8">Project Timeline</h2>
+        <div class="glass-strong p-6 sm:p-8">
+          <div class="space-y-6">
+            <div class="flex gap-4"><div class="timeline-dot"></div><div><p class="text-sm font-bold text-[#22C55E]">Q1 2024</p><p class="text-[rgba(248,250,252,0.6)] text-sm">Project dimulai. Integrasi Stockfish engine via Web Worker. Analisis MultiPV pertama berhasil.</p></div></div>
+            <div class="flex gap-4"><div class="timeline-dot"></div><div><p class="text-sm font-bold text-[#22C55E]">Q2 2024</p><p class="text-[rgba(248,250,252,0.6)] text-sm">Penambahan Chess.com API proxy, opening book detection, dan game review dengan klasifikasi langkah.</p></div></div>
+            <div class="flex gap-4"><div class="timeline-dot"></div><div><p class="text-sm font-bold text-[#22C55E]">Q3 2024</p><p class="text-[rgba(248,250,252,0.6)] text-sm">UI modern dark mode, avatars player, evaluation bar rotasi, drag-and-drop exploration, MultiPV depth 10.</p></div></div>
+            <div class="flex gap-4"><div class="timeline-dot" style="background:rgba(34,197,94,0.4);border-color:rgba(34,197,94,0.1)"></div><div><p class="text-sm font-bold text-[rgba(248,250,252,0.4)]">Q4 2024+</p><p class="text-[rgba(248,250,252,0.4)] text-sm">Rencana: Puzzle mode, mobile app, multiplayer analysis, dan fitur sosial.</p></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Statistics -->
+      <div class="max-w-4xl mx-auto">
+        <div class="glass-strong p-8 sm:p-12">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
+            <div><div class="stat-number">10K+</div><p class="text-[rgba(248,250,252,0.4)] text-sm mt-1">Games Reviewed</p></div>
+            <div><div class="stat-number">99%</div><p class="text-[rgba(248,250,252,0.4)] text-sm mt-1">Accuracy</p></div>
+            <div><div class="stat-number">100%</div><p class="text-[rgba(248,250,252,0.4)] text-sm mt-1">Free</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="border-t border-[rgba(255,255,255,0.04)] py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <p class="text-[rgba(248,250,252,0.2)] text-xs">Made with <i class="fas fa-heart"></i> &middot; Powered by Stockfish</p>
+        <p class="text-[rgba(248,250,252,0.2)] text-xs">&copy; 2024 Chess Review. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

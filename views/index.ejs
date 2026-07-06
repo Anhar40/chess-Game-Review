@@ -2,11 +2,11 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>Chess Game Review - Analisis Catur dengan Stockfish</title>
-  <meta name="description" content="Analisis permainan catur gratis menggunakan Stockfish. Cari game Chess.com, evaluasi langkah, deteksi opening book, dan pelajari kesalahanmu.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chess Game Review - Analisis Catur Premium dengan Stockfish</title>
+  <meta name="description" content="Analisis permainan catur gratis menggunakan Stockfish Engine. Review lengkap: Book, Brilliant, Best, Excellent, Good, Inaccuracy, Mistake, Blunder.">
   <meta name="keywords" content="chess, catur, analisis catur, stockfish, chess.com, review game, analisa catur, opening book, blunder detection">
-  <meta property="og:title" content="Chess Game Review - Analisis Catur dengan Stockfish">
+  <meta property="og:title" content="Chess Game Review - Analisis Catur Premium dengan Stockfish">
   <meta property="og:description" content="Analisis permainan catur gratis menggunakan Stockfish. Evaluasi setiap langkah, deteksi opening, temukan blunder.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://chess-game-review-ten.vercel.app">
@@ -14,425 +14,543 @@
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <link rel="icon" href="/images/wN.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="/cdn/tailwind"></script>
   <script src="/cdn/jquery.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
   <style>
-    * { box-sizing: border-box; }
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
     body {
-      background-color: #0f0f0d;
-      background-image:
-        radial-gradient(ellipse at 20% 50%, rgba(34,197,94,0.04) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 50%, rgba(34,197,94,0.03) 0%, transparent 50%),
-        radial-gradient(ellipse at 50% 0%, rgba(251,191,36,0.02) 0%, transparent 40%);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: #0B1220;
+      color: #F8FAFC;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
     ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: #1e1e1b; }
-    ::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
-    input, select { font-size: 16px; }
-
-    .chess-bg-grid {
-      background-image:
-        linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
-      background-size: 60px 60px;
+    ::-webkit-scrollbar-track { background: #0B1220; }
+    ::-webkit-scrollbar-thumb { background: #22C55E; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #1da34d; }
+    ::selection { background: rgba(34,197,94,0.3); color: #F8FAFC; }
+    input, select, textarea { font-size: 16px; }
+    .navbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      padding: 1rem 0;
     }
-
-    @keyframes float {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-10px); }
+    .navbar.scrolled {
+      background: rgba(11,18,32,0.75);
+      backdrop-filter: blur(20px) saturate(1.4);
+      -webkit-backdrop-filter: blur(20px) saturate(1.4);
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      padding: 0.6rem 0;
+      box-shadow: 0 4px 40px rgba(0,0,0,0.3);
     }
-    .animate-float { animation: float 4s ease-in-out infinite; }
-
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(30px); }
-      to { opacity: 1; transform: translateY(0); }
+    .nav-link {
+      position: relative;
+      color: rgba(248,250,252,0.6);
+      transition: color 0.3s ease;
+      cursor: pointer;
     }
-    .animate-fade-up { animation: fadeUp 0.8s ease-out forwards; }
-
-    .hero-icon-glow {
-      filter: drop-shadow(0 0 30px rgba(34,197,94,0.2));
+    .nav-link::after {
+      content: '';
+      position: absolute; bottom: -2px; left: 0;
+      width: 0; height: 2px;
+      background: #22C55E;
+      transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      border-radius: 1px;
     }
-
-    .card-feature {
-      background: rgba(30,30,27,0.7);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(255,255,255,0.06);
-      transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    .nav-link:hover { color: #F8FAFC; }
+    .nav-link:hover::after { width: 100%; }
+    .hamburger { display: flex; flex-direction: column; gap: 5px; cursor: pointer; padding: 4px; }
+    .hamburger span {
+      display: block; width: 24px; height: 2px;
+      background: #F8FAFC; border-radius: 2px;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .card-feature:hover {
-      transform: translateY(-4px);
-      border-color: rgba(34,197,94,0.3);
-      box-shadow: 0 8px 30px rgba(34,197,94,0.08);
+    .hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+    .hamburger.active span:nth-child(2) { opacity: 0; transform: translateX(-10px); }
+    .hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+    .mobile-menu {
+      position: fixed; top: 0; right: -100%; width: 300px; height: 100vh;
+      background: rgba(11,18,32,0.97);
+      backdrop-filter: blur(30px) saturate(1.5);
+      -webkit-backdrop-filter: blur(30px) saturate(1.5);
+      z-index: 99;
+      transition: right 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      padding: 6rem 2rem 2rem;
+      border-left: 1px solid rgba(255,255,255,0.04);
     }
-
-    .card-feature-icon {
-      font-size: 28px;
-      line-height: 1;
-    }
-
-    .stagger-item {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    .stagger-item.visible {
-      animation: fadeUp 0.6s ease-out forwards;
-    }
-
-    .card-search {
-      background: rgba(30,30,27,0.8);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255,255,255,0.08);
-    }
-
-    .card-result {
-      background: #1e1e1b;
-      transition: all 0.2s ease;
-    }
-    .card-result:hover {
-      background: #2a2a26;
-      border-color: rgba(34,197,94,0.4) !important;
-      transform: translateX(4px);
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, #22c55e, #16a34a);
-      transition: all 0.25s ease;
-    }
-    .btn-primary:hover {
-      background: linear-gradient(135deg, #2dd46b, #1a9c4a);
-      transform: scale(1.03);
-      box-shadow: 0 6px 25px rgba(34,197,94,0.25);
-    }
-    .btn-primary:active {
-      transform: scale(0.97);
-    }
-
-    .deco-piece {
-      position: fixed;
-      opacity: 0.04;
+    .mobile-menu.open { right: 0; }
+    .hero-glow {
+      position: absolute; width: 600px; height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(34,197,94,0.08) 0%, transparent 70%);
       pointer-events: none;
-      z-index: 0;
-      font-size: 180px;
-      user-select: none;
     }
-
-    @media (max-width: 640px) {
-      .deco-piece { font-size: 100px; }
-      .hero-icon-glow svg { width: 120px; height: 120px; }
+    .hero-glow-2 {
+      position: absolute; width: 400px; height: 400px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(59,130,246,0.06) 0%, transparent 60%);
+      pointer-events: none;
     }
+    @keyframes float { 0%,100% { transform: translateY(0px) rotate(0deg); } 33% { transform: translateY(-12px) rotate(1deg); } 66% { transform: translateY(-6px) rotate(-1deg); } }
+    @keyframes float-slow { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-20px); } }
+    @keyframes pulse-glow { 0%,100% { opacity: 0.4; transform: scale(1); } 50% { opacity: 0.8; transform: scale(1.05); } }
+    @keyframes shimmer { 0% { background-position: -200% center; } 100% { background-position: 200% center; } }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeLeft { from { opacity: 0; transform: translateX(-40px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes fadeRight { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes zoomIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+    @keyframes borderGlow { 0%,100% { border-color: rgba(34,197,94,0.2); } 50% { border-color: rgba(34,197,94,0.5); } }
+    .animate-float { animation: float 6s ease-in-out infinite; }
+    .animate-pulse-glow { animation: pulse-glow 3s ease-in-out infinite; }
+    .animate-fade-up { animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .animate-fade-left { animation: fadeLeft 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .animate-fade-right { animation: fadeRight 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .animate-zoom-in { animation: zoomIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .mockup-container { position: relative; perspective: 1000px; }
+    .mockup-frame {
+      background: #111827;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.06);
+      box-shadow: 0 20px 80px rgba(0,0,0,0.5), 0 0 40px rgba(34,197,94,0.03);
+      overflow: hidden;
+      transform: rotateY(-2deg) rotateX(2deg);
+      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .mockup-frame:hover { transform: rotateY(0deg) rotateX(0deg) translateY(-4px); }
+    .mockup-bar {
+      height: 32px; display: flex; align-items: center; gap: 8px;
+      padding: 0 16px;
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .mockup-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .mockup-board-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 22px; user-select: none; }
+    .mockup-board-cell.light { background: #E8EDF0; }
+    .mockup-board-cell.dark { background: #4A7C5B; }
+    .mockup-board-cell img { width: 70%; height: 70%; object-fit: contain; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3)); }
+    .mockup-eval-bar { width: 24px; border-radius: 4px; overflow: hidden; background: #1e1e2a; display: flex; flex-direction: column; }
+    .mockup-eval-fill { background: linear-gradient(to top, #22C55E, #16a34a); transition: height 1s ease; flex: 0 0 auto; }
+    .mockup-eval-top { flex: 1; background: #1e1e2a; }
+    .glass {
+      background: rgba(17,24,39,0.6);
+      backdrop-filter: blur(20px) saturate(1.3);
+      -webkit-backdrop-filter: blur(20px) saturate(1.3);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .glass-strong {
+      background: rgba(17,24,39,0.85);
+      backdrop-filter: blur(30px) saturate(1.5);
+      -webkit-backdrop-filter: blur(30px) saturate(1.5);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .feature-card {
+      background: #111827;
+      border: 1px solid rgba(255,255,255,0.04);
+      border-radius: 20px;
+      padding: 1.75rem;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    .feature-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, #22C55E, transparent);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+    .feature-card:hover { transform: translateY(-8px); border-color: rgba(34,197,94,0.2); box-shadow: 0 20px 60px rgba(34,197,94,0.06); }
+    .feature-card:hover::before { opacity: 1; }
+    .feature-icon {
+      width: 48px; height: 48px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(34,197,94,0.1);
+      font-size: 22px;
+      transition: all 0.4s ease;
+    }
+    .feature-card:hover .feature-icon { background: rgba(34,197,94,0.2); transform: scale(1.05); }
+    .timeline-line { position: absolute; top: 48px; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, rgba(34,197,94,0.1), rgba(34,197,94,0.4), rgba(34,197,94,0.1)); z-index: 0; }
+    .timeline-step { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+    .timeline-circle {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: #111827;
+      border: 2px solid rgba(34,197,94,0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px;
+      transition: all 0.4s ease;
+      position: relative;
+    }
+    .timeline-circle::after {
+      content: '';
+      position: absolute; inset: -4px; border-radius: 50%;
+      border: 2px solid rgba(34,197,94,0.1);
+      animation: borderGlow 2s ease-in-out infinite;
+    }
+    .timeline-step:hover .timeline-circle { border-color: #22C55E; box-shadow: 0 0 30px rgba(34,197,94,0.15); transform: scale(1.05); }
+    .device-frame { border: 2px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; background: #111827; box-shadow: 0 20px 60px rgba(0,0,0,0.4); transition: transform 0.4s ease; }
+    .device-frame:hover { transform: translateY(-6px); }
+    .device-frame.laptop { border-radius: 16px; }
+    .device-frame.tablet { border-radius: 24px; }
+    .device-frame.phone { border-radius: 32px; max-width: 240px; }
+    .why-card { background: #111827; border: 1px solid rgba(255,255,255,0.04); border-radius: 20px; padding: 2rem; text-align: center; transition: all 0.4s ease; }
+    .why-card:hover { transform: translateY(-4px); border-color: rgba(34,197,94,0.15); box-shadow: 0 12px 40px rgba(34,197,94,0.05); }
+    .why-icon { width: 56px; height: 56px; margin: 0 auto 1rem; border-radius: 16px; background: rgba(34,197,94,0.08); display: flex; align-items: center; justify-content: center; font-size: 24px; transition: all 0.4s ease; }
+    .why-card:hover .why-icon { background: rgba(34,197,94,0.15); transform: scale(1.1); }
+    .cta-section { position: relative; overflow: hidden; }
+    .cta-section::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 30% 50%, rgba(34,197,94,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 50%, rgba(59,130,246,0.08) 0%, transparent 60%); }
+    .cta-glow { position: absolute; width: 300px; height: 300px; border-radius: 50%; background: radial-gradient(circle, rgba(34,197,94,0.15) 0%, transparent 70%); top: -100px; right: -100px; animation: pulse-glow 4s ease-in-out infinite; }
+    .cta-glow-2 { position: absolute; width: 200px; height: 200px; border-radius: 50%; background: radial-gradient(circle, rgba(59,130,246,0.1) 0%, transparent 70%); bottom: -80px; left: -80px; animation: pulse-glow 5s ease-in-out infinite 1s; }
+    .faq-item { background: #111827; border: 1px solid rgba(255,255,255,0.04); border-radius: 16px; overflow: hidden; transition: border-color 0.3s ease; }
+    .faq-item:hover { border-color: rgba(255,255,255,0.08); }
+    .faq-item.active { border-color: rgba(34,197,94,0.2); }
+    .faq-question { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem; background: transparent; border: none; cursor: pointer; color: #F8FAFC; font-size: 1rem; font-weight: 500; text-align: left; font-family: inherit; transition: all 0.3s ease; }
+    .faq-question:hover { background: rgba(255,255,255,0.02); }
+    .faq-arrow { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.04); flex-shrink: 0; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+    .faq-item.active .faq-arrow { transform: rotate(180deg); background: rgba(34,197,94,0.15); }
+    .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+    .faq-answer-inner { padding: 0 1.5rem 1.25rem; color: rgba(248,250,252,0.6); font-size: 0.9rem; line-height: 1.7; }
+    .form-input { width: 100%; padding: 0.875rem 1.25rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; color: #F8FAFC; font-family: inherit; font-size: 0.95rem; transition: all 0.3s ease; outline: none; }
+    .form-input::placeholder { color: rgba(248,250,252,0.25); }
+    .form-input:focus { border-color: rgba(34,197,94,0.3); background: rgba(255,255,255,0.05); box-shadow: 0 0 0 4px rgba(34,197,94,0.05); }
+    .search-card { background: #111827; border: 1px solid rgba(255,255,255,0.04); border-radius: 24px; padding: 2.5rem; transition: all 0.3s ease; }
+    .search-card:focus-within { border-color: rgba(34,197,94,0.15); box-shadow: 0 0 40px rgba(34,197,94,0.03); }
+    .search-input { width: 100%; padding: 1rem 1.25rem; padding-left: 3rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; color: #F8FAFC; font-family: inherit; font-size: 0.95rem; transition: all 0.3s ease; outline: none; }
+    .search-input::placeholder { color: rgba(248,250,252,0.2); }
+    .search-input:focus { border-color: rgba(34,197,94,0.3); box-shadow: 0 0 0 4px rgba(34,197,94,0.05); }
+    .search-select { width: 100%; padding: 1rem 1.25rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; color: #F8FAFC; font-family: inherit; font-size: 0.95rem; transition: all 0.3s ease; outline: none; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23F8FAFC' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1rem center; }
+    .search-select:focus { border-color: rgba(34,197,94,0.3); box-shadow: 0 0 0 4px rgba(34,197,94,0.05); }
+    .search-select option { background: #111827; color: #F8FAFC; }
+    .game-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 16px; padding: 1rem 1.25rem; cursor: pointer; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+    .game-card:hover { background: rgba(255,255,255,0.04); border-color: rgba(34,197,94,0.2); transform: translateX(4px); box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+    .btn-primary { display: inline-flex; align-items: center; gap: 0.5rem; background: linear-gradient(135deg, #22C55E, #16a34a); color: white; font-weight: 600; font-family: inherit; padding: 0.875rem 2rem; border-radius: 14px; border: none; cursor: pointer; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); position: relative; overflow: hidden; text-decoration: none; }
+    .btn-primary::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, transparent, rgba(255,255,255,0.1), transparent); transform: translateX(-100%); transition: transform 0.5s ease; }
+    .btn-primary:hover::before { transform: translateX(100%); }
+    .btn-primary:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 30px rgba(34,197,94,0.25); }
+    .btn-primary:active { transform: scale(0.97); }
+    .btn-secondary { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.04); color: #F8FAFC; font-weight: 500; font-family: inherit; padding: 0.875rem 2rem; border-radius: 14px; border: 1px solid rgba(255,255,255,0.08); cursor: pointer; text-decoration: none; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+    .btn-secondary:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.12); transform: translateY(-2px); }
+    .btn-secondary:active { transform: scale(0.97); }
+    .support-card { background: #111827; border: 1px solid rgba(255,255,255,0.04); border-radius: 24px; padding: 2.5rem; text-align: center; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+    .support-card:hover { transform: translateY(-8px); border-color: rgba(34,197,94,0.15); box-shadow: 0 20px 60px rgba(34,197,94,0.06); }
+    .support-card .icon-wrap { width: 72px; height: 72px; margin: 0 auto 1.25rem; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 32px; transition: all 0.4s ease; }
+    .support-card:hover .icon-wrap { transform: scale(1.1); }
+    .progress-track { width: 100%; height: 8px; background: rgba(255,255,255,0.04); border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #22C55E, #16a34a); transition: width 1.5s cubic-bezier(0.16, 1, 0.3, 1); }
+    .tech-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 16px; padding: 1.5rem; text-align: center; transition: all 0.3s ease; }
+    .tech-card:hover { background: rgba(255,255,255,0.04); border-color: rgba(34,197,94,0.15); transform: translateY(-4px); }
+    .stat-number { font-size: 3rem; font-weight: 800; background: linear-gradient(135deg, #22C55E, #16a34a); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; }
+    .back-to-top { position: fixed; bottom: 2rem; right: 2rem; z-index: 50; width: 48px; height: 48px; border-radius: 14px; background: #111827; border: 1px solid rgba(255,255,255,0.06); color: #F8FAFC; cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0; transform: translateY(20px); pointer-events: none; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+    .back-to-top.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+    .back-to-top:hover { background: #22C55E; border-color: #22C55E; transform: translateY(-4px); box-shadow: 0 8px 30px rgba(34,197,94,0.2); }
+    .reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal-left { opacity: 0; transform: translateX(-40px); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+    .reveal-left.visible { opacity: 1; transform: translateX(0); }
+    .reveal-right { opacity: 0; transform: translateX(40px); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+    .reveal-right.visible { opacity: 1; transform: translateX(0); }
+    .reveal-zoom { opacity: 0; transform: scale(0.9); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+    .reveal-zoom.visible { opacity: 1; transform: scale(1); }
+    .particle { position: absolute; pointer-events: none; border-radius: 50%; background: rgba(34,197,94,0.03); }
+    .particle-1 { width: 80px; height: 80px; top: 10%; left: 5%; animation: float-slow 12s ease-in-out infinite; }
+    .particle-2 { width: 50px; height: 50px; top: 60%; right: 8%; animation: float-slow 10s ease-in-out infinite 2s; }
+    .particle-3 { width: 120px; height: 120px; bottom: 10%; left: 20%; animation: float-slow 15s ease-in-out infinite 4s; }
+    .spinner { width: 24px; height: 24px; border: 3px solid rgba(34,197,94,0.2); border-top-color: #22C55E; border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (max-width: 768px) { .stat-number { font-size: 2.5rem; } .search-card { padding: 1.5rem; } .support-card { padding: 2rem; } .feature-card { padding: 1.5rem; } .mockup-board-cell { font-size: 14px; } }
+    @media (max-width: 480px) { .stat-number { font-size: 2rem; } .btn-primary, .btn-secondary { padding: 0.75rem 1.5rem; font-size: 0.9rem; } .support-card { padding: 1.5rem; } }
   </style>
-</head>
-<body class="min-h-screen text-gray-200 font-sans">
-  <!-- Decorative chess pieces -->
-  <div class="deco-piece" style="top: -20px; left: -40px; transform: rotate(-15deg);">♝</div>
-  <div class="deco-piece" style="bottom: -20px; right: -30px; transform: rotate(25deg);">♜</div>
-  <div class="deco-piece" style="top: 40%; right: -50px; transform: rotate(10deg); display: none;" class="md:block">♛</div>
-
-  <div class="relative z-10">
-    <!-- ============================== -->
-    <!-- HERO SECTION                   -->
-    <!-- ============================== -->
-    <section class="max-w-6xl mx-auto px-4 sm:px-6 pt-12 sm:pt-16 pb-10 sm:pb-14">
-      <div class="flex flex-col md:flex-row items-center gap-8 md:gap-14">
-        <!-- Chess Icon -->
-        <div class="flex-shrink-0 animate-float hero-icon-glow order-1 md:order-2">
-          <svg width="180" height="180" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="knightGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#22c55e"/>
-                <stop offset="100%" stop-color="#16a34a"/>
-              </linearGradient>
-              <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#22c55e" stop-opacity="0.4"/>
-                <stop offset="100%" stop-color="#16a34a" stop-opacity="0.1"/>
-              </linearGradient>
-            </defs>
-            <circle cx="100" cy="100" r="92" stroke="url(#ringGrad)" stroke-width="1.5" fill="rgba(34,197,94,0.03)"/>
-            <circle cx="100" cy="100" r="82" stroke="url(#ringGrad)" stroke-width="1" fill="rgba(34,197,94,0.02)"/>
-            <text x="100" y="132" text-anchor="middle" font-size="110" fill="url(#knightGrad)" font-family="serif">♞</text>
-          </svg>
-        </div>
-
-        <!-- Hero Text -->
-        <div class="text-center md:text-left order-2 md:order-1 animate-fade-up">
-          <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white leading-tight">
-            Chess<br class="sm:hidden">
-            <span class="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-green-500">Game Review</span>
+</head><body>
+  <!-- Mobile Menu -->
+  <div class="mobile-menu" id="mobileMenu">
+    <div class="flex flex-col gap-2">
+      <a href="#" class="mobile-nav-link text-lg font-medium text-[#F8FAFC] no-underline px-4 py-3 rounded-xl hover:bg-[rgba(255,255,255,0.04)] transition-all" style="cursor:pointer"><i class="fas fa-home"></i> Home</a>
+      <a href="/support" class="mobile-nav-link text-lg font-medium text-[rgba(248,250,252,0.6)] no-underline px-4 py-3 rounded-xl hover:bg-[rgba(255,255,255,0.04)] transition-all" style="cursor:pointer"><i class="fas fa-heart"></i> Support</a>
+      <a href="/faq" class="mobile-nav-link text-lg font-medium text-[rgba(248,250,252,0.6)] no-underline px-4 py-3 rounded-xl hover:bg-[rgba(255,255,255,0.04)] transition-all" style="cursor:pointer"><i class="fas fa-question-circle"></i> FAQ</a>
+      <a href="/about" class="mobile-nav-link text-lg font-medium text-[rgba(248,250,252,0.6)] no-underline px-4 py-3 rounded-xl hover:bg-[rgba(255,255,255,0.04)] transition-all" style="cursor:pointer"><i class="fas fa-info-circle"></i> About</a>
+    </div>
+    <div class="mt-8">
+      <button onclick="document.querySelector('#searchSection').scrollIntoView({behavior:'smooth', block:'start'})" class="btn-primary w-full justify-center text-base"><i class="fas fa-play"></i> Start Analysis</button>
+    </div>
+  </div>
+  <button class="back-to-top" id="backToTop" aria-label="Back to top">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+  </button>
+  <nav class="navbar" id="navbar">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+      <a href="#" class="flex items-center gap-2.5 no-underline group">
+        <span class="text-2xl" style="line-height:1"><i class="fas fa-chess-knight"></i></span>
+        <span class="text-lg font-bold text-[#F8FAFC] tracking-tight">Chess<span class="text-[#22C55E]">Review</span></span>
+      </a>
+      <div class="hidden md:flex items-center gap-1">
+        <a href="#" class="nav-link px-3 py-2 text-sm no-underline"><i class="fas fa-home"></i> Home</a>
+        <a href="/support" class="nav-link px-3 py-2 text-sm no-underline"><i class="fas fa-heart"></i> Support</a>
+        <a href="/faq" class="nav-link px-3 py-2 text-sm no-underline"><i class="fas fa-question-circle"></i> FAQ</a>
+        <a href="/about" class="nav-link px-3 py-2 text-sm no-underline"><i class="fas fa-info-circle"></i> About</a>
+      </div>
+      <div class="hidden md:flex items-center gap-3">
+        <button onclick="document.querySelector('#searchSection').scrollIntoView({behavior:'smooth', block:'start'})" class="btn-primary text-sm px-5 py-2.5"><i class="fas fa-play"></i> Start Analysis</button>
+      </div>
+      <div class="md:hidden hamburger" id="hamburger" onclick="toggleMobileMenu()"><span></span><span></span><span></span></div>
+    </div>
+  </nav>
+  <section class="relative min-h-screen flex items-center overflow-hidden pt-24 pb-16">
+    <div class="hero-glow" style="top:-100px;left:-200px;animation:pulse-glow 4s ease-in-out infinite"></div>
+    <div class="hero-glow-2" style="bottom:-100px;right:-200px;animation:pulse-glow 5s ease-in-out infinite 1s"></div>
+    <div class="particle particle-1"></div>
+    <div class="particle particle-2"></div>
+    <div class="particle particle-3"></div>
+    <div class="absolute inset-0 opacity-[0.015] pointer-events-none" style="background-image:linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);background-size:60px 60px"></div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full relative z-10">
+      <div class="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+        <div class="flex-1 text-center lg:text-left">
+          <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[rgba(34,197,94,0.08)] border border-[rgba(34,197,94,0.12)] text-[#22C55E] text-xs font-semibold tracking-wide mb-6 animate-fade-up">
+            <span class="w-1.5 h-1.5 rounded-full bg-[#22C55E] animate-pulse"></span> Powered by Stockfish 10
+          </div>
+          <h1 class="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-extrabold leading-[1.1] tracking-tight animate-fade-up">
+            Analyze Your<br>
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#22C55E] via-[#2dd46b] to-[#16a34a]">Chess Games</span><br>
+            Like a Pro
           </h1>
-          <p class="text-gray-400 text-sm sm:text-base md:text-lg mt-3 sm:mt-4 max-w-xl leading-relaxed">
-            Analisis permainan catur menggunakan <strong class="text-green-400 font-semibold">Stockfish</strong>.
-            Temukan langkah terbaik, blunder, brilliant, opening, dan pelajari permainanmu secara mendalam.
+          <p class="text-[rgba(248,250,252,0.5)] text-base sm:text-lg mt-6 max-w-2xl lg:max-w-xl leading-relaxed animate-fade-up" style="animation-delay:0.15s">
+            Website ini menganalisis permainan catur menggunakan <strong class="text-[#22C55E] font-semibold">Stockfish Engine</strong> dan memberikan review lengkap mulai dari Book, Brilliant, Great, Best, Excellent, Good, Inaccuracy, Miss, Mistake hingga Blunder.
           </p>
-
-          <!-- CTA Buttons -->
-          <div class="flex flex-col sm:flex-row items-center gap-3 mt-6 sm:mt-8">
-            <button onclick="document.getElementById('searchSection').scrollIntoView({behavior:'smooth', block:'start'})"
-              class="btn-primary text-white font-bold px-8 py-3.5 rounded-xl text-base shadow-lg w-full sm:w-auto cursor-pointer">
-              <span class="flex items-center gap-2 justify-center">
-                <span>▶</span>
-                <span>Mulai Analisis</span>
-              </span>
-            </button>
+          <div class="flex flex-col sm:flex-row items-center gap-4 mt-8 animate-fade-up" style="animation-delay:0.3s">
+            <button onclick="document.querySelector('#searchSection').scrollIntoView({behavior:'smooth', block:'start'})" class="btn-primary text-base px-8 py-4 w-full sm:w-auto justify-center"><i class="fas fa-play"></i> Start Analysis</button>
+            <a href="/support" class="btn-secondary text-base px-8 py-4 w-full sm:w-auto justify-center no-underline"><i class="fas fa-heart"></i> Support</a>
+          </div>
+          <div class="flex flex-wrap items-center justify-center lg:justify-start gap-6 mt-10 animate-fade-up" style="animation-delay:0.45s">
+            <div class="flex items-center gap-2 text-[rgba(248,250,252,0.3)] text-xs">
+              <svg class="text-[#22C55E]" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Free Forever
+            </div>
+            <div class="flex items-center gap-2 text-[rgba(248,250,252,0.3)] text-xs">
+              <svg class="text-[#22C55E]" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> No Account Needed
+            </div>
+            <div class="flex items-center gap-2 text-[rgba(248,250,252,0.3)] text-xs">
+              <svg class="text-[#22C55E]" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> In-Browser Analysis
+            </div>
+          </div>
+        </div>
+        <div class="flex-1 w-full max-w-xl mx-auto lg:mx-0 mockup-container animate-fade-right" style="animation-delay:0.2s">
+          <div class="mockup-frame">
+            <div class="mockup-bar">
+              <div class="mockup-dot" style="background:#EF4444"></div>
+              <div class="mockup-dot" style="background:#F59E0B"></div>
+              <div class="mockup-dot" style="background:#22C55E"></div>
+              <div class="flex-1 flex justify-center"><span class="text-[rgba(248,250,252,0.15)] text-xs font-medium">Chess Review &mdash; Analysis</span></div>
+            </div>
+            <div class="flex items-center justify-between px-4 py-2.5 border-b border-[rgba(255,255,255,0.03)]">
+              <div class="flex items-center gap-2.5">
+                <div class="w-7 h-7 rounded-full bg-gradient-to-br from-[#22C55E] to-[#16a34a] flex items-center justify-center text-white text-xs font-bold">W</div>
+                <span class="text-xs font-semibold text-[#F8FAFC]">MagnusCarlsen</span>
+                <span class="text-[10px] text-[rgba(248,250,252,0.3)]">2832</span>
+              </div>
+              <span class="text-xs text-[rgba(248,250,252,0.3)] font-medium">vs</span>
+              <div class="flex items-center gap-2.5">
+                <span class="text-xs font-semibold text-[rgba(248,250,252,0.7)]">Hikaru</span>
+                <span class="text-[10px] text-[rgba(248,250,252,0.3)]">2768</span>
+                <div class="w-7 h-7 rounded-full bg-gradient-to-br from-[#1e1e2a] to-[#2a2a3a] flex items-center justify-center text-white text-xs font-bold">B</div>
+              </div>
+            </div>
+            <div class="flex gap-3 p-3">
+              <div class="flex-1 aspect-square grid grid-cols-8 rounded-lg overflow-hidden border border-[rgba(255,255,255,0.04)]">
+                <div class="mockup-board-cell light"><img src="/images/bR.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell dark"><img src="/images/bN.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell light"><img src="/images/bB.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell dark"><img src="/images/bQ.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell light"><img src="/images/bK.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell dark"><img src="/images/bB.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell light"><img src="/images/bN.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell dark"><img src="/images/bR.png" alt="" style="opacity:0.5"></div>
+                <div class="mockup-board-cell dark"><img src="/images/bP.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell light"><img src="/images/bP.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell dark"><img src="/images/bP.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell light"><img src="/images/bP.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell dark"><img src="/images/bP.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell light"><img src="/images/bP.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell dark"><img src="/images/bP.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell light"><img src="/images/bP.png" alt="" style="opacity:0.5"></div>
+                <div class="mockup-board-cell light"></div><div class="mockup-board-cell dark"></div><div class="mockup-board-cell light"></div><div class="mockup-board-cell dark"></div><div class="mockup-board-cell light"></div><div class="mockup-board-cell dark"></div><div class="mockup-board-cell light"></div><div class="mockup-board-cell dark"></div>
+                <div class="mockup-board-cell dark"></div><div class="mockup-board-cell light"></div><div class="mockup-board-cell dark"></div><div class="mockup-board-cell light"></div><div class="mockup-board-cell dark"></div><div class="mockup-board-cell light"></div><div class="mockup-board-cell dark"></div><div class="mockup-board-cell light"></div>
+                <div class="mockup-board-cell light"></div><div class="mockup-board-cell dark"></div><div class="mockup-board-cell light"></div><div class="mockup-board-cell dark"></div><div class="mockup-board-cell light"></div><div class="mockup-board-cell dark"></div><div class="mockup-board-cell light"></div><div class="mockup-board-cell dark"></div>
+                <div class="mockup-board-cell dark"></div><div class="mockup-board-cell light"></div><div class="mockup-board-cell dark"></div><div class="mockup-board-cell light"></div><div class="mockup-board-cell dark"></div><div class="mockup-board-cell light"></div><div class="mockup-board-cell dark"></div><div class="mockup-board-cell light"></div>
+                <div class="mockup-board-cell light"><img src="/images/wP.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell dark"><img src="/images/wP.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell light"><img src="/images/wP.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell dark"><img src="/images/wP.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell light"><img src="/images/wP.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell dark"><img src="/images/wP.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell light"><img src="/images/wP.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell dark"><img src="/images/wP.png" alt="" style="opacity:0.5"></div>
+                <div class="mockup-board-cell dark"><img src="/images/wR.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell light"><img src="/images/wN.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell dark"><img src="/images/wB.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell light"><img src="/images/wQ.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell dark"><img src="/images/wK.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell light"><img src="/images/wB.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell dark"><img src="/images/wN.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell light"><img src="/images/wR.png" alt="" style="opacity:0.5"></div>
+              </div>
+              <div class="mockup-eval-bar flex-shrink-0" style="height:140px"><div class="mockup-eval-fill" style="height:55%"></div><div class="mockup-eval-top"></div></div>
+            </div>
+            <div class="border-t border-[rgba(255,255,255,0.03)] px-4 py-2.5">
+              <div class="flex gap-4 text-[11px] leading-relaxed font-medium">
+                <div><div><span style="color:rgba(248,250,252,0.3);min-width:24px;display:inline-block">1.</span><span style="color:#F8FAFC">e4</span> <span style="color:rgba(248,250,252,0.6)">e5</span></div><div><span style="color:rgba(248,250,252,0.3);min-width:24px;display:inline-block">2.</span><span style="color:#F8FAFC">Nf3</span> <span style="color:rgba(248,250,252,0.6)">Nc6</span></div><div><span style="color:rgba(248,250,252,0.3);min-width:24px;display:inline-block">3.</span><span style="color:#F8FAFC">Bb5</span> <span style="color:rgba(248,250,252,0.6)">a6</span></div><div><span style="color:rgba(248,250,252,0.3);min-width:24px;display:inline-block">4.</span><span style="color:#F8FAFC">Ba4</span> <span style="color:#22C55E;font-weight:600">Nf6</span></div></div>
+                <div><div><span style="color:rgba(248,250,252,0.3);min-width:24px;display:inline-block">5.</span><span style="color:#F8FAFC">O-O</span> <span style="color:rgba(248,250,252,0.6)">Be7</span></div><div><span style="color:rgba(248,250,252,0.3);min-width:24px;display:inline-block">6.</span><span style="color:#F8FAFC">Re1</span> <span style="color:rgba(248,250,252,0.6)">b5</span></div><div><span style="color:rgba(248,250,252,0.3);min-width:24px;display:inline-block">7.</span><span style="color:#F8FAFC">Bb3</span> <span style="color:rgba(248,250,252,0.6)">d6</span></div><div><span style="color:rgba(248,250,252,0.3);min-width:24px;display:inline-block">8.</span><span style="color:#F8FAFC">c3</span> <span style="color:rgba(248,250,252,0.6)">O-O</span></div></div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </section>
-
-    <!-- ============================== -->
-    <!-- FEATURES SECTION               -->
-    <!-- ============================== -->
-    <section class="max-w-5xl mx-auto px-4 sm:px-6 pb-10 sm:pb-12">
-      <div class="text-center mb-8 stagger-item" id="featuresTitle">
-        <h2 class="text-xl sm:text-2xl font-bold text-white">Fitur Unggulan</h2>
-        <p class="text-gray-500 text-sm mt-1">Semua analisis berjalan di browser — 100% gratis</p>
+    </div>
+  </section>  <section id="features" class="relative py-20 sm:py-28">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto mb-16 reveal">
+        <span class="inline-block text-xs font-semibold tracking-widest text-[#22C55E] uppercase mb-4">Features</span>
+        <h2 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#F8FAFC] tracking-tight">Everything You Need to<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-[#22C55E] to-[#16a34a]">Improve Your Game</span></h2>
+        <p class="text-[rgba(248,250,252,0.4)] text-base sm:text-lg mt-4 leading-relaxed">Analisis mendalam dengan Stockfish Engine &mdash; semua berjalan di browser, 100% gratis.</p>
       </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-        <div class="card-feature rounded-xl p-4 sm:p-5 stagger-item">
-          <div class="card-feature-icon mb-2">♟️</div>
-          <h3 class="text-white font-semibold text-sm sm:text-base">Analisis Stockfish</h3>
-          <p class="text-gray-500 text-xs sm:text-sm mt-1 leading-relaxed">Engine catur terkuat berjalan langsung di browser. Evaluasi setiap langkah secara real-time.</p>
-        </div>
-        <div class="card-feature rounded-xl p-4 sm:p-5 stagger-item">
-          <div class="card-feature-icon mb-2">📖</div>
-          <h3 class="text-white font-semibold text-sm sm:text-base">Deteksi Opening Book</h3>
-          <p class="text-gray-500 text-xs sm:text-sm mt-1 leading-relaxed">Kenali nama opening, variasi, dan kode ECO secara otomatis dari setiap permainan.</p>
-        </div>
-        <div class="card-feature rounded-xl p-4 sm:p-5 stagger-item">
-          <div class="card-feature-icon mb-2">⭐</div>
-          <h3 class="text-white font-semibold text-sm sm:text-base">Penilaian Langkah</h3>
-          <p class="text-gray-500 text-xs sm:text-sm mt-1 leading-relaxed">Best, Excellent, Good, Inaccuracy, Mistake, Blunder — klasifikasi langkah seperti Chess.com.</p>
-        </div>
-        <div class="card-feature rounded-xl p-4 sm:p-5 stagger-item">
-          <div class="card-feature-icon mb-2">📊</div>
-          <h3 class="text-white font-semibold text-sm sm:text-base">Evaluasi Centipawn</h3>
-          <p class="text-gray-500 text-xs sm:text-sm mt-1 leading-relaxed">Grafik evaluasi, winning chances, dan analisis mendalam setiap posisi di papan.</p>
-        </div>
-        <div class="card-feature rounded-xl p-4 sm:p-5 stagger-item">
-          <div class="card-feature-icon mb-2">🔍</div>
-          <h3 class="text-white font-semibold text-sm sm:text-base">Saran Langkah Terbaik</h3>
-          <p class="text-gray-500 text-xs sm:text-sm mt-1 leading-relaxed">Stockfish menampilkan langkah terbaik dengan tanda panah langsung di papan catur.</p>
-        </div>
-        <div class="card-feature rounded-xl p-4 sm:p-5 stagger-item">
-          <div class="card-feature-icon mb-2">🎯</div>
-          <h3 class="text-white font-semibold text-sm sm:text-base">Review Lengkap</h3>
-          <p class="text-gray-500 text-xs sm:text-sm mt-1 leading-relaxed">Lihat ringkasan akurasi, blunder, dan momen kritis dari seluruh permainan.</p>
-        </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+        <div class="feature-card reveal"><div class="feature-icon mb-4"><i class="fas fa-chess-knight"></i></div><h3 class="text-lg font-bold text-[#F8FAFC] mb-2">Game Review</h3><p class="text-[rgba(248,250,252,0.4)] text-sm leading-relaxed">Review setiap langkah dengan klasifikasi akurat: Brilliant, Best, Excellent, Good, Inaccuracy, Mistake, Blunder.</p></div>
+        <div class="feature-card reveal" style="transition-delay:0.05s"><div class="feature-icon mb-4"><i class="fas fa-chart-bar"></i></div><h3 class="text-lg font-bold text-[#F8FAFC] mb-2">Accuracy Analysis</h3><p class="text-[rgba(248,250,252,0.4)] text-sm leading-relaxed">Persentase akurasi per pemain berdasarkan perbandingan dengan langkah terbaik Stockfish.</p></div>
+        <div class="feature-card reveal" style="transition-delay:0.1s"><div class="feature-icon mb-4"><i class="fas fa-gem"></i></div><h3 class="text-lg font-bold text-[#F8FAFC] mb-2">Brilliant Detection</h3><p class="text-[rgba(248,250,252,0.4)] text-sm leading-relaxed">Deteksi otomatis langkah Brilliant &mdash; pengorbanan taktis dengan evaluasi yang akurat.</p></div>
+        <div class="feature-card reveal" style="transition-delay:0.15s"><div class="feature-icon mb-4"><i class="fas fa-book"></i></div><h3 class="text-lg font-bold text-[#F8FAFC] mb-2">Opening Detection</h3><p class="text-[rgba(248,250,252,0.4)] text-sm leading-relaxed">Kenali nama opening, variasi, dan kode ECO secara otomatis dari setiap permainan.</p></div>
+        <div class="feature-card reveal" style="transition-delay:0.2s"><div class="feature-icon mb-4"><i class="fas fa-chart-line"></i></div><h3 class="text-lg font-bold text-[#F8FAFC] mb-2">Evaluation Graph</h3><p class="text-[rgba(248,250,252,0.4)] text-sm leading-relaxed">Grafik evaluasi centipawn interaktif dengan winning chances di setiap posisi.</p></div>
+        <div class="feature-card reveal" style="transition-delay:0.25s"><div class="feature-icon mb-4"><i class="fas fa-bolt"></i></div><h3 class="text-lg font-bold text-[#F8FAFC] mb-2">Fast Analysis</h3><p class="text-[rgba(248,250,252,0.4)] text-sm leading-relaxed">Analisis MultiPV depth 10 yang cepat &mdash; temukan top 3 langkah terbaik di setiap posisi.</p></div>
+        <div class="feature-card reveal" style="transition-delay:0.3s"><div class="feature-icon mb-4"><i class="fas fa-brain"></i></div><h3 class="text-lg font-bold text-[#F8FAFC] mb-2">Stockfish Engine</h3><p class="text-[rgba(248,250,252,0.4)] text-sm leading-relaxed">Stockfish 10 berjalan langsung di browser via WebAssembly &mdash; tanpa server backend.</p></div>
+        <div class="feature-card reveal" style="transition-delay:0.35s"><div class="feature-icon mb-4"><i class="fas fa-mobile-alt"></i></div><h3 class="text-lg font-bold text-[#F8FAFC] mb-2">Fully Responsive</h3><p class="text-[rgba(248,250,252,0.4)] text-sm leading-relaxed">Antarmuka responsif yang sempurna di desktop, tablet, dan smartphone.</p></div>
       </div>
-    </section>
-
-    <!-- ============================== -->
-    <!-- SEARCH SECTION                 -->
-    <!-- ============================== -->
-    <section id="searchSection" class="max-w-4xl mx-auto px-4 sm:px-6 pb-10 sm:pb-14 stagger-item">
-      <div class="card-search rounded-2xl p-5 sm:p-7 shadow-xl">
-        <div class="text-center mb-5 sm:mb-6">
-          <h2 class="text-lg sm:text-xl font-bold text-white">Analisis Permainan Chess.com</h2>
-          <p class="text-gray-500 text-xs sm:text-sm mt-1">Masukkan username dan bulan untuk memulai</p>
-        </div>
-
+    </div>
+  </section>
+  <section class="cta-section relative py-24 sm:py-32">
+    <div class="cta-glow"></div>
+    <div class="cta-glow-2"></div>
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 text-center relative z-10 reveal-zoom">
+      <h2 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#F8FAFC] tracking-tight mb-4">Ready to Improve Your Chess?</h2>
+      <p class="text-[rgba(248,250,252,0.4)] text-lg max-w-2xl mx-auto mb-8">Mulai analisis permainan Chess.com kamu sekarang juga. Gratis, cepat, dan akurat.</p>
+      <button onclick="document.querySelector('#searchSection').scrollIntoView({behavior:'smooth', block:'start'})" class="btn-primary text-lg px-10 py-4 sm:px-12 sm:py-5"><i class="fas fa-play"></i> Start Analysis</button>
+    </div>
+  </section>  <section id="searchSection" class="relative py-20 sm:py-28 bg-[rgba(255,255,255,0.01)]">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6">
+      <div class="text-center max-w-3xl mx-auto mb-12 reveal">
+        <span class="inline-block text-xs font-semibold tracking-widest text-[#22C55E] uppercase mb-4">Start Analysis</span>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-[#F8FAFC] tracking-tight">Analisis Permainan <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#22C55E] to-[#16a34a]">Chess.com</span></h2>
+        <p class="text-[rgba(248,250,252,0.4)] text-base mt-3">Masukkan username dan bulan untuk memulai</p>
+      </div>
+      <div class="search-card reveal">
         <form id="searchForm">
-          <div class="space-y-4">
+          <div class="space-y-5">
             <div>
-              <label for="username" class="block text-sm font-medium text-gray-300 mb-1.5">Username Chess.com</label>
+              <label for="username" class="block text-sm font-medium text-[rgba(248,250,252,0.7)] mb-2">Username Chess.com</label>
               <div class="relative">
-                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 text-lg">♔</span>
-                <input type="text" id="username" placeholder="Contoh: magnuscarlsen" autocomplete="off" autocapitalize="off"
-                  class="w-full pl-10 pr-4 py-3 rounded-xl bg-[#2a2a26] border border-gray-700 text-white placeholder-gray-500 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition text-sm">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-[rgba(248,250,252,0.3)] text-lg"><i class="fas fa-chess-king"></i></span>
+                <input type="text" id="username" placeholder="Contoh: magnuscarlsen" autocomplete="off" autocapitalize="off" class="search-input">
               </div>
             </div>
             <div class="flex flex-col sm:flex-row gap-3 sm:gap-4">
-              <div class="flex-1">
-                <label for="month" class="block text-sm font-medium text-gray-300 mb-1.5">Bulan</label>
-                <select id="month"
-                  class="w-full px-4 py-3 rounded-xl bg-[#2a2a26] border border-gray-700 text-white focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition text-sm">
-                </select>
-              </div>
-              <div class="flex-1">
-                <label for="year" class="block text-sm font-medium text-gray-300 mb-1.5">Tahun</label>
-                <select id="year"
-                  class="w-full px-4 py-3 rounded-xl bg-[#2a2a26] border border-gray-700 text-white focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition text-sm">
-                </select>
-              </div>
-              <div class="flex items-end sm:min-w-[120px]">
-                <button type="submit" id="searchBtn"
-                  class="w-full py-3 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 active:scale-[0.97] text-white font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 shadow-lg text-sm">
-                  <span class="flex items-center gap-2 justify-center">
-                    <span>🔍</span>
-                    <span>Cari Game</span>
-                  </span>
-                </button>
+              <div class="flex-1"><label for="month" class="block text-sm font-medium text-[rgba(248,250,252,0.7)] mb-2">Bulan</label><select id="month" class="search-select"></select></div>
+              <div class="flex-1"><label for="year" class="block text-sm font-medium text-[rgba(248,250,252,0.7)] mb-2">Tahun</label><select id="year" class="search-select"></select></div>
+              <div class="flex items-end sm:min-w-[140px]">
+                <button type="submit" id="searchBtn" class="btn-primary w-full justify-center text-base py-4"><i class="fas fa-search"></i> Cari Game</button>
               </div>
             </div>
           </div>
         </form>
       </div>
-    </section>
-
-    <!-- Loading -->
-    <section class="max-w-4xl mx-auto px-4 sm:px-6">
-      <div id="loading" class="hidden text-center py-10">
-        <div class="inline-block w-10 h-10 border-4 border-green-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p class="text-gray-400 text-sm">Mengambil data dari Chess.com...</p>
-        <p class="text-gray-600 text-xs mt-1">Mohon tunggu sebentar</p>
+      <div id="loading" class="hidden flex flex-col items-center py-16 reveal">
+        <div class="spinner w-10 h-10 mb-4"></div>
+        <p class="text-[rgba(248,250,252,0.5)] text-sm">Mengambil data dari Chess.com...</p>
+        <p class="text-[rgba(248,250,252,0.2)] text-xs mt-1">Mohon tunggu sebentar</p>
       </div>
-
-      <!-- Error -->
-      <div id="error" class="hidden card-search rounded-2xl p-5 mb-8 border-l-4 border-red-500">
-        <p id="errorMsg" class="text-red-400 text-sm"></p>
+      <div id="error" class="hidden glass-strong rounded-2xl p-5 mb-8 border-l-4 border-[#EF4444] reveal">
+        <p id="errorMsg" class="text-[#EF4444] text-sm"></p>
       </div>
-
-      <!-- Results -->
-      <div id="results" class="hidden space-y-3 pb-10 sm:pb-14">
-        <div class="flex items-center justify-between flex-wrap gap-2 mb-4">
-          <h2 class="text-lg sm:text-xl font-bold text-white">
-            Game
-            <span id="usernameDisplay" class="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-green-500"></span>
-          </h2>
-          <span class="text-xs sm:text-sm text-gray-500">klik game untuk analisa</span>
+      <div id="results" class="hidden space-y-3 pb-10 sm:pb-14 reveal">
+        <div class="flex items-center justify-between flex-wrap gap-2 mb-6">
+          <h3 class="text-xl sm:text-2xl font-bold text-[#F8FAFC]">Game <span id="usernameDisplay" class="text-transparent bg-clip-text bg-gradient-to-r from-[#22C55E] to-[#16a34a]"></span></h3>
+          <span class="text-xs text-[rgba(248,250,252,0.3)]">klik game untuk analisa</span>
         </div>
         <div id="gameList" class="space-y-2.5"></div>
       </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="text-center py-6 sm:py-8 text-gray-600 text-xs">
-      <p>Chess Game Review &mdash; Powered by Stockfish 10 &mdash; Data dari Chess.com API</p>
-    </footer>
-  </div>
-
+    </div>
+  </section>
+  <section id="faq" class="relative py-20 sm:py-28 bg-[rgba(255,255,255,0.01)]">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6">
+      <div class="text-center max-w-3xl mx-auto mb-16 reveal">
+        <span class="inline-block text-xs font-semibold tracking-widest text-[#22C55E] uppercase mb-4">FAQ</span>
+        <h2 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#F8FAFC] tracking-tight">Frequently Asked <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#22C55E] to-[#16a34a]">Questions</span></h2>
+      </div>
+      <div class="space-y-3 reveal" id="faqContainer">
+        <div class="faq-item"><button class="faq-question" onclick="toggleFaq(this)"><span>Apakah website ini gratis?</span><span class="faq-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></button><div class="faq-answer"><div class="faq-answer-inner">Ya, 100% gratis selamanya. Tidak ada iklan, tidak ada batasan jumlah analisis, dan tidak memerlukan akun.</div></div></div>
+        <div class="faq-item"><button class="faq-question" onclick="toggleFaq(this)"><span>Bagaimana cara kerja analisisnya?</span><span class="faq-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></button><div class="faq-answer"><div class="faq-answer-inner">Stockfish Engine berjalan langsung di browser kamu melalui Web Worker. Setelah kamu memilih game dari Chess.com, setiap langkah akan dievaluasi dan diklasifikasikan berdasarkan perbandingan dengan langkah terbaik engine.</div></div></div>
+        <div class="faq-item"><button class="faq-question" onclick="toggleFaq(this)"><span>Apakah data game saya disimpan?</span><span class="faq-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></button><div class="faq-answer"><div class="faq-answer-inner">Tidak. Data game diambil langsung dari Chess.com API dan hanya diproses di browser kamu. Kami tidak menyimpan data apapun di server.</div></div></div>
+        <div class="faq-item"><button class="faq-question" onclick="toggleFaq(this)"><span>Menggunakan engine apa?</span><span class="faq-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></button><div class="faq-answer"><div class="faq-answer-inner">Kami menggunakan Stockfish 10 &mdash; salah satu engine catur terkuat di dunia. Dengan analisis MultiPV depth 10 untuk mendapatkan 3 langkah terbaik di setiap posisi.</div></div></div>
+        <div class="faq-item"><button class="faq-question" onclick="toggleFaq(this)"><span>Apakah mendukung HP/smartphone?</span><span class="faq-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></button><div class="faq-answer"><div class="faq-answer-inner">Ya, antarmuka kami responsif dan bekerja sempurna di semua perangkat &mdash; desktop, tablet, dan smartphone.</div></div></div>
+        <div class="faq-item"><button class="faq-question" onclick="toggleFaq(this)"><span>Apakah perlu akun Chess.com?</span><span class="faq-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></button><div class="faq-answer"><div class="faq-answer-inner">Kamu hanya perlu memasukkan username Chess.com untuk mengambil game publik. Tidak perlu login atau memberikan password.</div></div></div>
+        <div class="faq-item"><button class="faq-question" onclick="toggleFaq(this)"><span>Berapa lama proses analisis?</span><span class="faq-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></button><div class="faq-answer"><div class="faq-answer-inner">Tergantung panjang permainan. Rata-rata 5-15 detik untuk game 40 langkah. Analisis berjalan otomatis setelah game dipilih.</div></div></div>
+        <div class="faq-item"><button class="faq-question" onclick="toggleFaq(this)"><span>Apakah bisa digunakan offline?</span><span class="faq-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></button><div class="faq-answer"><div class="faq-answer-inner">Tidak untuk saat ini. Karena game diambil dari Chess.com API, koneksi internet diperlukan. Namun engine berjalan di browser, jadi setelah game dimuat, analisis tetap berjalan.</div></div></div>
+      </div>
+    </div>
+  </section>
+  <footer class="relative border-t border-[rgba(255,255,255,0.04)] py-16 sm:py-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12">
+        <div><div class="flex items-center gap-2.5 mb-4"><span class="text-2xl"><i class="fas fa-chess-knight"></i></span><span class="text-lg font-bold text-[#F8FAFC] tracking-tight">Chess<span class="text-[#22C55E]">Review</span></span></div><p class="text-[rgba(248,250,252,0.3)] text-sm leading-relaxed">Analisis permainan catur gratis menggunakan Stockfish Engine. Review lengkap untuk membantu kamu meningkatkan permainan.</p><div class="flex gap-3 mt-5"><a href="#" class="w-10 h-10 rounded-xl bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.04)] flex items-center justify-center text-[rgba(248,250,252,0.4)] hover:text-[#22C55E] hover:border-[rgba(34,197,94,0.2)] transition-all no-underline"><i class="fab fa-github"></i></a><a href="#" class="w-10 h-10 rounded-xl bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.04)] flex items-center justify-center text-[rgba(248,250,252,0.4)] hover:text-[#22C55E] hover:border-[rgba(34,197,94,0.2)] transition-all no-underline"><i class="fab fa-discord"></i></a><a href="#" class="w-10 h-10 rounded-xl bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.04)] flex items-center justify-center text-[rgba(248,250,252,0.4)] hover:text-[#22C55E] hover:border-[rgba(34,197,94,0.2)] transition-all no-underline"><i class="fas fa-envelope"></i></a><a href="#" class="w-10 h-10 rounded-xl bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.04)] flex items-center justify-center text-[rgba(248,250,252,0.4)] hover:text-[#22C55E] hover:border-[rgba(34,197,94,0.2)] transition-all no-underline"><i class="fas fa-music"></i></a></div></div>
+        <div><h4 class="text-sm font-bold text-[#F8FAFC] mb-5">Navigation</h4><ul class="space-y-3"><li><a href="#" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[#22C55E] transition-colors no-underline">Home</a></li><li><a href="#features" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[#22C55E] transition-colors no-underline">Features</a></li><li><a href="/support" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[#22C55E] transition-colors no-underline">Support</a></li><li><a href="/faq" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[#22C55E] transition-colors no-underline">FAQ</a></li><li><a href="/contact" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[#22C55E] transition-colors no-underline">Contact</a></li><li><a href="/about" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[#22C55E] transition-colors no-underline">About</a></li></ul></div>
+        <div><h4 class="text-sm font-bold text-[#F8FAFC] mb-5">Resources</h4><ul class="space-y-3"><li><a href="#" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[#22C55E] transition-colors no-underline">Stockfish Engine</a></li><li><a href="#" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[#22C55E] transition-colors no-underline">Chess.com API</a></li><li><a href="#" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[#22C55E] transition-colors no-underline">Opening Book</a></li><li><a href="#" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[#22C55E] transition-colors no-underline">PGN Reference</a></li><li><a href="#" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[#22C55E] transition-colors no-underline">Changelog</a></li></ul></div>
+        <div><h4 class="text-sm font-bold text-[#F8FAFC] mb-5">Stay Updated</h4><p class="text-[rgba(248,250,252,0.3)] text-sm mb-4">Dapatkan update fitur terbaru dan tips catur.</p><div class="flex gap-2"><input type="email" placeholder="email kamu" class="flex-1 px-4 py-2.5 rounded-xl bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.06)] text-sm text-[#F8FAFC] outline-none focus:border-[rgba(34,197,94,0.3)] transition-all" style="font-family:inherit"><button class="px-4 py-2.5 rounded-xl bg-[#22C55E] text-white text-sm font-semibold hover:bg-[#1da34d] transition-all border-none cursor-pointer" style="font-family:inherit">Subscribe</button></div></div>
+      </div>
+      <div class="mt-12 pt-8 border-t border-[rgba(255,255,255,0.04)] flex flex-col sm:flex-row items-center justify-between gap-4"><p class="text-[rgba(248,250,252,0.2)] text-xs">Made with <i class="fas fa-heart"></i> &middot; Powered by Stockfish</p><p class="text-[rgba(248,250,252,0.2)] text-xs">&copy; 2024 Chess Review. All rights reserved.</p></div>
+    </div>
+  </footer>
   <script>
-    // ================================================================
-    // Stagger animation via IntersectionObserver
-    // ================================================================
-    (function() {
-      const items = document.querySelectorAll('.stagger-item');
-      if (items.length) {
-        const observer = new IntersectionObserver((entries) => {
-          entries.forEach((entry, i) => {
-            if (entry.isIntersecting) {
-              const idx = Array.from(items).indexOf(entry.target);
-              entry.target.style.animationDelay = (idx * 0.08) + 's';
-              entry.target.classList.add('visible');
-              observer.unobserve(entry.target);
-            }
-          });
-        }, { threshold: 0.1 });
-        items.forEach(el => observer.observe(el));
-      }
-    })();
-
-    // ================================================================
-    // Populate month/year selects client-side (avoids server-timezone
-    // mismatch with the browser).
-    // ================================================================
-    const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-    const now = new Date();
-    const curMonth = now.getMonth();
-    const curYear = now.getFullYear();
-
-    const $month = $('#month');
-    MONTHS.forEach((name, i) => {
-      const val = String(i + 1).padStart(2, '0');
-      $month.append(`<option value="${val}" ${i === curMonth ? 'selected' : ''}>${name}</option>`);
-    });
-
-    const $year = $('#year');
-    for (let y = curYear; y >= 2005; y--) {
-      $year.append(`<option value="${y}" ${y === curYear ? 'selected' : ''}>${y}</option>`);
+    var navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', function() {
+      var s = window.pageYOffset;
+      if (s > 40) navbar.classList.add('scrolled'); else navbar.classList.remove('scrolled');
+      var btt = document.getElementById('backToTop');
+      if (s > 600) btt.classList.add('visible'); else btt.classList.remove('visible');
+    }, { passive: true });
+    document.getElementById('backToTop').addEventListener('click', function() { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+    function toggleMobileMenu() { document.getElementById('mobileMenu').classList.toggle('open'); document.getElementById('hamburger').classList.toggle('active'); }
+    document.querySelectorAll('.mobile-nav-link').forEach(function(el) { el.addEventListener('click', function() { document.getElementById('mobileMenu').classList.remove('open'); document.getElementById('hamburger').classList.remove('active'); }); });
+    function toggleFaq(btn) {
+      var item = btn.closest('.faq-item');
+      var answer = item.querySelector('.faq-answer');
+      var isActive = item.classList.contains('active');
+      document.querySelectorAll('.faq-item.active').forEach(function(el) { if (el !== item) { el.classList.remove('active'); el.querySelector('.faq-answer').style.maxHeight = '0'; } });
+      if (isActive) { item.classList.remove('active'); answer.style.maxHeight = '0'; }
+      else { item.classList.add('active'); answer.style.maxHeight = answer.scrollHeight + 'px'; }
     }
-
-    // ================================================================
-    // Search form
-    // ================================================================
+    function handleContact(e) { e.preventDefault(); var btn = e.target.querySelector('button[type="submit"]'); var orig = btn.innerHTML; btn.innerHTML = '<span class="spinner" style="width:20px;height:20px;border-width:2px"></span> Sending...'; btn.disabled = true; setTimeout(function() { btn.innerHTML = "&#x2714; Sent!"; setTimeout(function() { btn.innerHTML = orig; btn.disabled = false; }, 2000); }, 1000); return false; }
+    (function() {
+      var reveals = document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-zoom');
+      if (reveals.length) { var observer = new IntersectionObserver(function(entries) { entries.forEach(function(entry) { if (entry.isIntersecting) { entry.target.classList.add('visible'); observer.unobserve(entry.target); } }); }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' }); reveals.forEach(function(el) { observer.observe(el); }); }
+      var progressBar = document.getElementById('progressBar');
+      if (progressBar) { var progObserver = new IntersectionObserver(function(entries) { entries.forEach(function(entry) { if (entry.isIntersecting) { progressBar.style.width = '65%'; progObserver.unobserve(entry.target); } }); }, { threshold: 0.5 }); progObserver.observe(progressBar); }
+    })();
+    var MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+    var now = new Date(), curMonth = now.getMonth(), curYear = now.getFullYear();
+    var $month = $('#month');
+    MONTHS.forEach(function(name, i) { var val = String(i + 1).padStart(2, '0'); $month.append('<option value="' + val + '" ' + (i === curMonth ? 'selected' : '') + '>' + name + '</option>'); });
+    var $year = $('#year');
+    for (var y = curYear; y >= 2005; y--) { $year.append('<option value="' + y + '" ' + (y === curYear ? 'selected' : '') + '>' + y + '</option>'); }
     $('#searchForm').on('submit', async function(e) {
       e.preventDefault();
-      const username = $('#username').val().trim();
+      var username = $('#username').val().trim();
       if (!username) { alert('Masukkan username Chess.com'); return; }
-
-      const month = $('#month').val();
-      const year = $('#year').val();
-
-      $('#loading').removeClass('hidden');
-      $('#error').addClass('hidden');
-      $('#results').addClass('hidden');
-      $('#gameList').empty();
-      $('#searchBtn').prop('disabled', true);
-
+      var month = $('#month').val(), year = $('#year').val();
+      $('#loading').removeClass('hidden'); $('#error').addClass('hidden'); $('#results').addClass('hidden'); $('#gameList').empty(); $('#searchBtn').prop('disabled', true);
       try {
-        const res = await $.getJSON(`/api/proxy/games/${encodeURIComponent(username)}/${year}/${month}`);
-        $('#loading').addClass('hidden');
-        $('#usernameDisplay').text(username);
-
-        if (!res.games || res.games.length === 0) {
-          $('#gameList').html('<p class="text-gray-500 text-center py-4">Tidak ada game ditemukan untuk bulan ini</p>');
-        } else {
-          [...res.games].reverse().forEach(game => renderGame(game, username));
-        }
+        var res = await $.getJSON('/api/proxy/games/' + encodeURIComponent(username) + '/' + year + '/' + month);
+        $('#loading').addClass('hidden'); $('#usernameDisplay').text(username);
+        if (!res.games || res.games.length === 0) { $('#gameList').html('<p class="text-[rgba(248,250,252,0.3)] text-center py-8">Tidak ada game ditemukan untuk bulan ini</p>'); }
+        else { var games = res.games.slice().reverse(); games.forEach(function(game) { renderGame(game, username); }); }
         $('#results').removeClass('hidden');
       } catch (err) {
         $('#loading').addClass('hidden');
-        let msg = 'Gagal mengambil data';
+        var msg = 'Gagal mengambil data';
         if (err.responseJSON && err.responseJSON.error) msg = err.responseJSON.error;
         else if (err.status === 404) msg = 'Username tidak ditemukan';
         else if (err.status === 0) msg = 'Tidak dapat terhubung ke server. Periksa koneksi internet.';
-        $('#errorMsg').text(msg);
-        $('#error').removeClass('hidden');
-      } finally {
-        $('#searchBtn').prop('disabled', false);
-      }
+        $('#errorMsg').text(msg); $('#error').removeClass('hidden');
+      } finally { $('#searchBtn').prop('disabled', false); }
     });
-
-    function escapeHtml(str) {
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-    }
-
+    function escapeHtml(str) { return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
     function renderGame(game, username) {
-      const white = game.white?.username || '?';
-      const black = game.black?.username || '?';
-      const result = game.white?.result || game.black?.result || '*';
-      const date = game.end_time
-        ? new Date(game.end_time * 1000).toLocaleDateString('id-ID')
-        : (game.end_date || '-');
-      const timeClass = game.time_class === 'blitz' ? '⚡' : game.time_class === 'rapid' ? '⏱' : (game.time_class === 'bullet' ? '🚀' : '🏆');
-      const isUserWhite = white.toLowerCase() === username.toLowerCase();
-      const userResult = isUserWhite ? game.white?.result : game.black?.result;
-      const resultColor = userResult === 'win' ? 'text-green-400' : (userResult && userResult !== 'win') ? 'text-red-400' : 'text-yellow-400';
-      const opponent = isUserWhite ? black : white;
-
-      const pgn = game.pgn || '';
+      var white = game.white ? game.white.username || '?' : '?';
+      var black = game.black ? game.black.username || '?' : '?';
+      var result = (game.white ? game.white.result : null) || (game.black ? game.black.result : null) || '*';
+      var date = game.end_time ? new Date(game.end_time * 1000).toLocaleDateString('id-ID') : (game.end_date || '-');
+      var timeClass = game.time_class === 'blitz' ? '<i class="fas fa-bolt"></i>' : game.time_class === 'rapid' ? '<i class="fas fa-stopwatch"></i>' : (game.time_class === 'bullet' ? '<i class="fas fa-rocket"></i>' : '<i class="fas fa-trophy"></i>');
+      var isUserWhite = white.toLowerCase() === username.toLowerCase();
+      var userResult = isUserWhite ? (game.white ? game.white.result : null) : (game.black ? game.black.result : null);
+      var resultColor = userResult === 'win' ? 'text-[#22C55E]' : (userResult && userResult !== 'win' ? 'text-[#EF4444]' : 'text-[#F59E0B]');
+      var opponent = isUserWhite ? black : white;
+      var pgn = game.pgn || '';
       if (!pgn) return;
-
-      const card = $(`
-        <div class="card-result rounded-xl p-3 sm:p-4 cursor-pointer border border-gray-800 game-card">
-          <div class="flex items-center justify-between gap-2">
-            <div class="flex items-center gap-3 sm:gap-4 min-w-0">
-              <span class="text-xl flex-shrink-0">${timeClass}</span>
-              <div class="min-w-0">
-                <p class="text-white font-semibold text-sm sm:text-base truncate">
-                  ${isUserWhite ? '<span class="text-green-400">●</span>' : ''} ${escapeHtml(white)}
-                  <span class="text-gray-500 mx-1">vs</span>
-                  ${escapeHtml(black)} ${!isUserWhite ? '<span class="text-green-400">●</span>' : ''}
-                </p>
-                <p class="text-xs sm:text-sm text-gray-400 truncate">${date} — ${escapeHtml(game.time_class || '-')} (${game.rated ? 'Rated' : 'Casual'})</p>
-              </div>
-            </div>
-            <div class="text-right flex-shrink-0">
-              <p class="text-base sm:text-lg font-bold ${resultColor}">${escapeHtml(result)}</p>
-              <p class="text-xs text-gray-500 truncate max-w-[100px]">vs ${escapeHtml(opponent)}</p>
-            </div>
-          </div>
-        </div>
-      `);
-
-      card.on('click', function() {
-        window.location.href = '/game?pgn=' + encodeURIComponent(pgn);
-      });
-
-      $('#gameList').append(card);
+      var card = document.createElement('div');
+      card.className = 'game-card';
+      card.innerHTML = '<div class="flex items-center justify-between gap-2"><div class="flex items-center gap-3 sm:gap-4 min-w-0"><span class="text-xl flex-shrink-0">' + timeClass + '</span><div class="min-w-0"><p class="text-[#F8FAFC] font-semibold text-sm sm:text-base truncate">' + (isUserWhite ? '<span class="text-[#22C55E]">&#x25CF;</span> ' : '') + escapeHtml(white) + ' <span class="text-[rgba(248,250,252,0.3)] mx-1">vs</span> ' + escapeHtml(black) + (!isUserWhite ? ' <span class="text-[#22C55E]">&#x25CF;</span>' : '') + '</p><p class="text-xs sm:text-sm text-[rgba(248,250,252,0.4)] truncate">' + date + ' &mdash; ' + escapeHtml(game.time_class || '-') + ' (' + (game.rated ? 'Rated' : 'Casual') + ')</p></div></div><div class="text-right flex-shrink-0"><p class="text-base sm:text-lg font-bold ' + resultColor + '">' + escapeHtml(result) + '</p><p class="text-xs text-[rgba(248,250,252,0.3)] truncate max-w-[100px]">vs ' + escapeHtml(opponent) + '</p></div></div>';
+      card.addEventListener('click', function() { window.location.href = '/game?pgn=' + encodeURIComponent(pgn); });
+      document.getElementById('gameList').appendChild(card);
     }
   </script>
 </body>
