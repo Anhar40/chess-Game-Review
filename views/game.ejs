@@ -49,7 +49,7 @@
     #moveList::-webkit-scrollbar-track { background: transparent; }
     #moveList::-webkit-scrollbar-thumb { background: #444; border-radius: 2px; }
     .chart-container { position: relative; height: 220px; width: 100%; }
-    .piece-417db { cursor: default !important; }
+    .piece-417db { cursor: pointer !important; }
     input, select { font-size: 16px; }
 
     #analysisOverlay {
@@ -94,8 +94,8 @@
     .highlight-square { position: absolute; pointer-events: none; z-index: 20; border-radius: 0; }
     .highlight-src { background: rgba(255, 213, 0, 0.55); }
     .highlight-dst { background: rgba(255, 213, 0, 0.35); }
-    .legal-dot { position: absolute; border-radius: 50%; pointer-events: none; z-index: 25; background: rgba(0, 0, 0, 0.25); }
-    .legal-capture { position: absolute; border-radius: 50%; pointer-events: none; z-index: 25; border: 5px solid rgba(0, 0, 0, 0.2); }
+    .legal-dot { position: absolute; border-radius: 50%; pointer-events: none; z-index: 25; background: rgba(120, 200, 80, 0.7); }
+    .legal-capture { position: absolute; border-radius: 50%; pointer-events: none; z-index: 25; border: 5px solid rgba(120, 200, 80, 0.5); }
 
     @media (min-width: 640px) {
       .chart-container { height: 250px; }
@@ -551,7 +551,8 @@
       resizeTimer = setTimeout(() => {
         if (board) {
           board.resize();
-          board.position(pgnValid ? fens[currentPly] : 'start', false);
+          const fen = (_userPlyOff > 0) ? userMoveStack[_userPlyOff - 1].fen : (pgnValid ? fens[currentPly] : 'start');
+          board.position(fen, false);
           positionArrowLayer();
           drawSuggestionArrow();
           drawSquareBadge(currentPly);
@@ -598,10 +599,11 @@
       return 'blunder';
     }
 
-    function renderMoveList() {
+    function renderMoveList(ply, hideLabels) {
       const $list = $('#moveList');
       if (!pgnValid) { $list.html(''); return; }
       let html = '';
+      const showBadges = !hideLabels;
       for (let i = 0; i < totalMoves; i += 2) {
         const moveNum = Math.floor(i / 2) + 1;
         const whiteMove = history[i];
@@ -609,12 +611,12 @@
         const whitePly = i + 1;
         const blackPly = i + 2;
 
-        const wInfo = classifications[whitePly];
-        const bInfo = classifications[blackPly];
+        const wInfo = showBadges ? classifications[whitePly] : null;
+        const bInfo = showBadges ? classifications[blackPly] : null;
         const wBadge = wInfo ? `<span class="${wInfo.cls}" title="${wInfo.label}">${wInfo.icon}</span>` : '';
         const bBadge = bInfo ? `<span class="${bInfo.cls}" title="${bInfo.label}">${bInfo.icon}</span>` : '';
 
-        html += `<div class="move-entry ${currentPly === whitePly ? 'move-active' : ''}" data-ply="${whitePly}">
+        html += `<div class="move-entry ${ply === whitePly ? 'move-active' : ''}" data-ply="${whitePly}">
           <span class="text-gray-500">${moveNum}.</span>
           <span class="move-text ${wInfo ? wInfo.cls : ''} cursor-pointer hover:text-green-400" data-ply="${whitePly}">${whiteMove ? escapeHtml(whiteMove.san) : ''} ${wBadge}</span>
           <span class="move-text ${bInfo ? bInfo.cls : ''} cursor-pointer hover:text-green-400" data-ply="${blackPly}">${blackMove ? escapeHtml(blackMove.san) : ''} ${bBadge}</span>
@@ -624,18 +626,19 @@
 
       $list.find('.move-text').on('click', function(e) {
         e.stopPropagation();
-        const ply = parseInt($(this).data('ply'));
-        if (!isNaN(ply)) goToPly(ply);
+        const p = parseInt($(this).data('ply'));
+        if (!isNaN(p)) navToPly(p);
       });
       $list.find('.move-entry').on('click', function() {
-        const ply = parseInt($(this).data('ply'));
-        if (!isNaN(ply)) goToPly(ply);
+        const p = parseInt($(this).data('ply'));
+        if (!isNaN(p)) navToPly(p);
       });
     }
 
     function updateMoveClassifyCallout(ply) {
       const $c = $('#moveClassifyCallout');
       const info = classifications[ply];
+      $c.css('background', '');
       if (!info || ply === 0) { $c.addClass('hidden'); return; }
       const bgMap = {
         book: 'bg-[#b58863]/20 text-[#b58863]',
@@ -707,13 +710,13 @@
     }
 
     function drawSuggestionArrow() {
-      if (bookPlies[currentPly]) return;
+      if (_userPlyOff === 0 && bookPlies[currentPly]) return;
       const $svg = $('#boardArrowLayer');
       if (!$svg.length) return;
       $svg.find('.arrow-group').remove();
       if (!$('#arrowToggle').is(':checked')) return;
 
-      const suggestion = window._userSuggestion || bestMoves[currentPly];
+      const suggestion = (_userPlyOff > 0 ? window._userSuggestion : null) || bestMoves[currentPly];
       if (!suggestion || !suggestion.from || !suggestion.to) return;
 
       const boardWidthPx = $('#board').width();
@@ -767,55 +770,149 @@
     }
 
     // ============================================================
-    // 7. NAVIGATION
+    // 7. NAVIGATION (including user custom moves)
     // ============================================================
     function clearUserHighlights() {
       selectedSquare = null;
       userFen = null;
+      userSanList = [];
+      userMoveStack = [];
+      _userPlyOff = 0;
+      _userMoveBasePly = 0;
       window._userSuggestion = null;
-      $('#board').find('.highlight-square, .legal-dot, .legal-capture').remove();
+      $('#board').find('.highlight-square, .legal-dot, .legal-capture, .pv-badge').remove();
     }
 
-    function updateBoard(playSound) {
-      if (board && pgnValid) board.position(fens[currentPly]);
-      clearUserHighlights();
-      $('#moveCounter').text(`${currentPly} / ${totalMoves}`);
-      renderMoveList();
+    function totalPlies() { return totalMoves + userMoveStack.length; }
+
+    function showPosition(playSound) {
+      if (!board || !pgnValid) return;
+      const isUserMove = _userPlyOff > 0;
+      const ply = currentPly + _userPlyOff;
+
+      if (isUserMove) {
+        const entry = userMoveStack[_userPlyOff - 1];
+        board.position(entry.fen);
+      } else {
+        board.position(fens[currentPly]);
+      }
+
+      $('#moveCounter').text(`${ply} / ${totalMoves + userMoveStack.length}`);
+      renderMoveList(ply, isUserMove);
       updateOpeningInfo(currentPly);
-      updateMoveClassifyCallout(currentPly);
-      drawSuggestionArrow();
-      drawSquareBadge(currentPly);
       syncBottomBar();
 
-      const evals = window.evaluations || [];
-      updateEvalBar(evals[currentPly] !== undefined ? evals[currentPly] : null);
+      // Draw suggestion arrow
+      drawSuggestionArrow();
 
-      if (playSound) playMoveSound();
+      // Clear board overlays (highlights/badges) then re-draw
+      $('#board').find('.highlight-square, .legal-dot, .legal-capture, .pv-badge').remove();
+      $('#squareBadgeOverlay').remove();
 
-      if (currentPly > 0 && pgnValid) {
-        const lastMove = history[currentPly - 1];
-        if (lastMove) highlightLastMove(lastMove.from, lastMove.to);
+      if (isUserMove) {
+        const entry = userMoveStack[_userPlyOff - 1];
+        highlightLastMove(entry);
+        // Show classification callout
+        const meta = MOVE_ICONS[entry.type] || MOVE_ICONS.good;
+        $('#moveClassifyCallout').removeClass('hidden')
+          .html(`<span class="${meta.cls}">${entry.san}  ${meta.icon}  ${meta.label}</span>`)
+          .css('background', 'rgba(30,30,27,0.9)');
+        // Show badge on moved piece
+        const sanSeq = [];
+        for (let i = 0; i < currentPly; i++) sanSeq.push(history[i].san);
+        for (let i = 0; i < userMoveStack.length; i++) sanSeq.push(userMoveStack[i].san);
+        const bookMatch = findLongestOpeningMatch(sanSeq);
+        showMultiPvIcons(entry.to, entry.type, !!(bookMatch && bookMatch.moves.length >= sanSeq.length));
+        // Evaluation bar for user moves
+        updateEvalBar(entry.score);
+      } else {
+        window._userSuggestion = null;
+        highlightLastMove(ply > 0 && ply <= totalMoves ? history[ply - 1] : null);
+        updateMoveClassifyCallout(ply);
+        drawSquareBadge(ply);
+        const evals = window.evaluations || [];
+        updateEvalBar(evals[currentPly] !== undefined ? evals[currentPly] : null);
       }
+
+      if (playSound !== false) playMoveSound();
     }
 
-    function goToPly(ply, playSound) {
+    function highlightLastMove(move) {
+      clearLegalHighlights();
+      if (move && move.from) highlightSquare(move.from, 'highlight-src');
+      if (move && move.to) highlightSquare(move.to, 'highlight-dst');
+    }
+
+    function navPrev(playSound) {
+      if (!pgnValid) return;
+      const cur = currentPly + _userPlyOff;
+      if (cur <= 0) return;
+      const prevPly = cur - 1;
+      if (prevPly <= totalMoves) { currentPly = prevPly; _userPlyOff = 0; }
+      else { currentPly = totalMoves; _userPlyOff = prevPly - totalMoves; }
+      showPosition(playSound);
+    }
+
+    function navNext(playSound) {
+      if (!pgnValid) return;
+      const cur = currentPly + _userPlyOff;
+      const total = totalMoves + userMoveStack.length;
+      if (cur >= total) return;
+      const nextPly = cur + 1;
+      if (nextPly <= totalMoves) { currentPly = nextPly; _userPlyOff = 0; }
+      else { currentPly = totalMoves; _userPlyOff = nextPly - totalMoves; }
+      showPosition(playSound);
+    }
+
+    function navFirst(playSound) {
+      if (!pgnValid) return;
+      const changed = currentPly > 0 || _userPlyOff > 0;
+      currentPly = 0; _userPlyOff = 0;
+      if (changed) showPosition(playSound);
+    }
+
+    function navLast(playSound) {
+      if (!pgnValid) return;
+      const prev = currentPly + _userPlyOff;
+      const maxPly = totalMoves + userMoveStack.length;
+      if (maxPly <= totalMoves) { currentPly = maxPly; _userPlyOff = 0; }
+      else { currentPly = totalMoves; _userPlyOff = maxPly - totalMoves; }
+      if (currentPly + _userPlyOff !== prev) showPosition(playSound);
+    }
+
+    function navToPly(ply, playSound) {
       if (!pgnValid) return;
       if (ply < 0) ply = 0;
-      if (ply > totalMoves) ply = totalMoves;
-      const changed = ply !== currentPly;
-      currentPly = ply;
-      updateBoard(playSound !== false && changed);
+      const maxPly = totalMoves + userMoveStack.length;
+      if (ply > maxPly) ply = maxPly;
+      const was = currentPly + _userPlyOff;
+      if (ply <= totalMoves) {
+        currentPly = ply;
+        _userPlyOff = 0;
+        clearUserHighlights();
+      } else {
+        currentPly = totalMoves;
+        _userPlyOff = ply - totalMoves;
+      }
+      if (currentPly + _userPlyOff !== was) showPosition(playSound);
     }
 
-    $('#firstBtn').on('click', () => goToPly(0));
-    $('#prevBtn').on('click', () => goToPly(currentPly - 1));
-    $('#nextBtn').on('click', () => goToPly(currentPly + 1));
-    $('#lastBtn').on('click', () => goToPly(totalMoves));
-    $('#arrowToggle').on('change', drawSuggestionArrow);
+    // Re-bind navigation event handlers
+    function bindNavButtons() {
+      $('#firstBtn').off().on('click', () => navFirst());
+      $('#prevBtn').off().on('click', () => navPrev());
+      $('#nextBtn').off().on('click', () => navNext());
+      $('#lastBtn').off().on('click', () => navLast());
+      $('#barPrevBtn').off().on('click', () => navPrev());
+      $('#barNextBtn').off().on('click', () => navNext());
+      $('#barRotateBtn').off().on('click', rotateBoard);
+    }
 
     function syncBottomBar() {
-      $('#barPrevBtn').prop('disabled', currentPly <= 0);
-      $('#barNextBtn').prop('disabled', currentPly >= totalMoves);
+      const ply = currentPly + _userPlyOff;
+      const total = totalMoves + userMoveStack.length;
+      $('#barPrevBtn').prop('disabled', ply <= 0);
+      $('#barNextBtn').prop('disabled', ply >= total);
     }
 
     function swapPlayerDisplay() {
@@ -854,27 +951,32 @@
       }
     }
 
-    $('#barPrevBtn').on('click', () => goToPly(currentPly - 1));
-    $('#barNextBtn').on('click', () => goToPly(currentPly + 1));
-    $('#barRotateBtn').on('click', rotateBoard);
+    bindNavButtons();
+    $('#arrowToggle').on('change', drawSuggestionArrow);
 
     $(document).on('keydown', function(e) {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
-      if (e.key === 'ArrowLeft') goToPly(currentPly - 1);
-      if (e.key === 'ArrowRight') goToPly(currentPly + 1);
-      if (e.key === 'Home') goToPly(0);
-      if (e.key === 'End') goToPly(totalMoves);
+      if (e.key === 'ArrowLeft') navPrev();
+      if (e.key === 'ArrowRight') navNext();
+      if (e.key === 'Home') navFirst();
+      if (e.key === 'End') navLast();
     });
 
     (function enableSwipe() {
       const el = document.getElementById('board');
       if (!el) return;
-      let touchStartX = 0;
-      el.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
+      let touchStartX = 0, touchStartY = 0;
+      el.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+        touchStartY = e.changedTouches[0].screenY;
+      }, { passive: true });
       el.addEventListener('touchend', (e) => {
         const dx = e.changedTouches[0].screenX - touchStartX;
-        if (Math.abs(dx) < 40) return;
-        if (dx > 0) goToPly(currentPly - 1); else goToPly(currentPly + 1);
+        const dy = e.changedTouches[0].screenY - touchStartY;
+        if (Math.abs(dx) < 40 && Math.abs(dy) < 40) return;
+        if (Math.abs(dx) > Math.abs(dy)) {
+          if (dx > 0) navPrev(); else navNext();
+        }
       }, { passive: true });
     })();
 
@@ -1104,9 +1206,18 @@
     // ============================================================
     let selectedSquare = null;
     let userFen = null;
+    let userSanList = [];
+    let userMoveStack = [];   // { from, to, san, fen, type } for each custom move
+    let _userPlyOff = 0;      // offset beyond totalMoves; 0 = at base (no user move shown)
+    let _userMoveBasePly = 0; // currentPly when first user move was made
     let userMoveWorker = null;
     let userMoveWorkerReady = false;
     let currentMultiPv = [];
+
+    function getCurrentFen() {
+      if (_userPlyOff > 0) return userMoveStack[_userPlyOff - 1].fen;
+      return fens[currentPly];
+    }
 
     function initUserMoveWorker() {
       if (typeof Worker === 'undefined') return;
@@ -1119,13 +1230,15 @@
       } catch (e) {}
     }
 
+    let _workerHandler = null;
     function analyzeMultiPv(fen) {
       return new Promise((resolve) => {
         if (!userMoveWorker || !userMoveWorkerReady) { resolve([]); return; }
+        if (_workerHandler) userMoveWorker.removeEventListener('message', _workerHandler);
         const pvs = {};
         let settled = false;
         const timer = setTimeout(() => { settled = true; resolve(Object.values(pvs).sort((a,b) => a.idx - b.idx)); }, 12000);
-        const handler = function(e) {
+        _workerHandler = function(e) {
           const line = e.data;
           if (typeof line !== 'string') return;
           const mpv = line.match(/multipv\s+(\d+).*?score cp\s+(-?\d+).*?pv\s+(\S+)/);
@@ -1140,24 +1253,24 @@
           }
           if (line.startsWith('bestmove') && !settled) {
             settled = true; clearTimeout(timer);
-            userMoveWorker.removeEventListener('message', handler);
             resolve(Object.values(pvs).sort((a,b) => a.idx - b.idx));
           }
         };
-        userMoveWorker.addEventListener('message', handler);
+        userMoveWorker.addEventListener('message', _workerHandler);
         userMoveWorker.postMessage('ucinewgame');
         userMoveWorker.postMessage('setoption name MultiPV value 3');
         userMoveWorker.postMessage('position fen ' + fen);
-        userMoveWorker.postMessage('go depth 10');
+        userMoveWorker.postMessage('go depth 8');
       });
     }
 
     function evaluateUserMove(fen) {
       return new Promise((resolve) => {
         if (!userMoveWorker || !userMoveWorkerReady) { resolve({ score: 0, bestMove: null }); return; }
+        if (_workerHandler) userMoveWorker.removeEventListener('message', _workerHandler);
         let bestScore = null, bestMoveUci = null, settled = false;
         const timer = setTimeout(() => { settled = true; resolve({ score: bestScore || 0, bestMove: bestMoveUci }); }, 8000);
-        const handler = function(e) {
+        _workerHandler = function(e) {
           const line = e.data;
           if (typeof line !== 'string') return;
           const cp = line.match(/info.*score cp\s+(-?\d+)/);
@@ -1168,15 +1281,14 @@
             settled = true; clearTimeout(timer);
             const p = line.split(' ');
             bestMoveUci = p[1] && p[1] !== '(none)' ? p[1] : null;
-            userMoveWorker.removeEventListener('message', handler);
             resolve({ score: bestScore || 0, bestMove: bestMoveUci });
           }
         };
-        userMoveWorker.addEventListener('message', handler);
+        userMoveWorker.addEventListener('message', _workerHandler);
         userMoveWorker.postMessage('ucinewgame');
         userMoveWorker.postMessage('setoption name MultiPV value 1');
         userMoveWorker.postMessage('position fen ' + fen);
-        userMoveWorker.postMessage('go depth 10');
+        userMoveWorker.postMessage('go depth 8');
       });
     }
 
@@ -1193,7 +1305,7 @@
     }
 
     function clearLegalHighlights() {
-      $('#board').find('.highlight-square, .legal-dot, .legal-capture, .pv-badge').remove();
+      $('#board').find('.highlight-square, .legal-dot, .legal-capture').remove();
     }
 
     function highlightSquare(sq, className) {
@@ -1206,9 +1318,9 @@
     }
 
     function getCurrentSanSeq() {
-      if (userFen) return [];
       const s = [];
       for (let i = 0; i < currentPly; i++) s.push(history[i].san);
+      for (let i = 0; i < userSanList.length; i++) s.push(userSanList[i]);
       return s;
     }
 
@@ -1234,7 +1346,7 @@
     function showLegalMoves(sq) {
       clearLegalHighlights();
       const c = new Chess();
-      c.load(userFen || fens[currentPly]);
+      c.load(getCurrentFen());
       const moves = c.moves({ square: sq, verbose: true });
       const bw = $('#board').width();
       const cell = bw / 8;
@@ -1246,60 +1358,57 @@
         if (m.captured) {
           placeOverlay(m.to, 'legal-capture', {
             left: p.x - 2, top: p.y - 2, width: p.cell + 4, height: p.cell + 4,
-            borderRadius: '50%', border: '5px solid rgba(0,0,0,0.2)'
+            borderRadius: '50%', border: '5px solid rgba(120,200,80,0.5)'
           });
         } else {
-          const size = cell * 0.22;
+          const size = Math.max(12, cell * 0.28);
           placeOverlay(m.to, 'legal-dot', {
             left: p.x + (cell - size) / 2, top: p.y + (cell - size) / 2,
-            width: size, height: size, borderRadius: '50%', background: 'rgba(0,0,0,0.3)'
+            width: size, height: size, borderRadius: '50%', background: 'rgba(120,200,80,0.7)'
           });
         }
       });
       return moves;
     }
 
-    function showMultiPvIcons(pvs, legalSquares, bookSquares) {
+    function showMultiPvIcons(moveTo, type, isBook) {
       $('#board').find('.pv-badge').remove();
-      if (!pvs || pvs.length === 0) return;
+      if (!moveTo) return;
       const bw = $('#board').width();
       const cell = bw / 8;
-      pvs.forEach((pv, i) => {
-        if (!pv || !pv.move) return;
-        const toSq = pv.move.slice(2, 4);
-        if (!legalSquares.includes(toSq)) return;
-        const isBook = bookSquares && bookSquares[toSq];
-        const label = isBook ? '📖' : (['★','👍','✔'][i] || '');
-        const color = isBook ? '#b58863' : ['#81b64c','#81b64c','#95b776'][i];
-        const p = squareToPixel(toSq, bw);
-        $('<div>', { class: 'pv-badge', css: {
-          position: 'absolute',
-          left: p.x + cell/2, top: p.y + 2,
-          fontSize: Math.max(16, cell * 0.38) + 'px', fontWeight: 'bold',
-          color: color, pointerEvents: 'none', zIndex: 35, lineHeight: 1,
-          textShadow: '0 1px 4px rgba(0,0,0,0.95)',
-          transform: 'translate(-50%, 0)'
-        }}).text(label).appendTo('#board');
-      });
-    }
-
-    function highlightLastMove(from, to) {
-      clearLegalHighlights();
-      if (from) highlightSquare(from, 'highlight-src');
-      if (to) highlightSquare(to, 'highlight-dst');
+      const label = isBook ? '📖' : (MOVE_ICONS[type] ? MOVE_ICONS[type].icon : '');
+      const color = isBook ? '#b58863' : (type === 'best' ? '#81b64c' : (type === 'excellent' ? '#81b64c' : '#95b776'));
+      const p = squareToPixel(moveTo, bw);
+      const size = Math.max(24, cell * 0.55);
+      $('<div>', { class: 'pv-badge', css: {
+        position: 'absolute',
+        left: p.x + cell/2, top: p.y + cell/2,
+        width: size, height: size, lineHeight: size + 'px',
+        fontSize: Math.max(14, cell * 0.3) + 'px', fontWeight: 'bold',
+        color: '#fff', background: color, borderRadius: '50%',
+        textAlign: 'center', pointerEvents: 'none', zIndex: 35,
+        boxShadow: '0 1px 4px rgba(0,0,0,0.6)',
+        transform: 'translate(-50%, -50%)'
+      }}).text(label).appendTo('#board');
     }
 
     async function onUserMove(from, to) {
+      window._userSuggestion = null;
       const c = new Chess();
-      c.load(userFen || fens[currentPly]);
+      c.load(getCurrentFen());
+      const fenBefore = c.fen();
       let move;
       try { move = c.move({ from, to, promotion: 'q' }, { sloppy: true }); } catch (e) {}
       if (!move) return false;
 
       playMoveSound();
       userFen = c.fen();
+      userSanList.push(move.san);
+      if (userMoveStack.length === 0) _userMoveBasePly = currentPly;
       board.position(userFen);
-      highlightLastMove(from, to);
+      clearLegalHighlights();
+      if (from) highlightSquare(from, 'highlight-src');
+      if (to) highlightSquare(to, 'highlight-dst');
       const playedUci = from + to;
       let type = 'good';
       let bestScore = null;
@@ -1310,7 +1419,6 @@
         else if (currentMultiPv[2] && playedUci === currentMultiPv[2].move) { type = 'good'; bestScore = currentMultiPv[2].score; }
         else {
           bestScore = currentMultiPv[0] ? currentMultiPv[0].score : 0;
-          const isWhiteSide = currentMultiPv[0] ? true : true;
           const mvEval = window.evaluations && window.evaluations[currentPly];
           const loss = Math.abs((bestScore || 0) - (mvEval || 0));
           if (loss <= 30) type = 'excellent';
@@ -1319,42 +1427,69 @@
           else if (loss <= 350) type = 'mistake';
           else type = 'blunder';
         }
-        if (currentMultiPv[0] && currentMultiPv[0].move) {
-          window._userSuggestion = { from: currentMultiPv[0].move.slice(0, 2), to: currentMultiPv[0].move.slice(2, 4) };
-        }
       } else {
         $('#statusBadge').text('Menganalisis...').removeClass('text-red-400').addClass('text-green-400');
-        const result = await evaluateUserMove(userFen);
+        const result = await evaluateUserMove(fenBefore);
         $('#statusBadge').text('Siap').removeClass('text-green-400');
         bestScore = result.score;
         if (result.bestMove && playedUci === result.bestMove) type = 'best';
-        if (result.bestMove) {
-          window._userSuggestion = { from: result.bestMove.slice(0, 2), to: result.bestMove.slice(2, 4) };
-        }
       }
 
       const meta = MOVE_ICONS[type] || MOVE_ICONS.good;
       $('#moveClassifyCallout').removeClass('hidden')
         .html(`<span class="${meta.cls}">${move.san}  ${meta.icon}  ${meta.label}</span>`)
         .css('background', 'rgba(30,30,27,0.9)');
-      drawSuggestionArrow();
+
+      // Show classification badge on the moved piece
+      const sanSeq = getCurrentSanSeq();
+      const bookMatch = findLongestOpeningMatch(sanSeq);
+      showMultiPvIcons(to, type, !!(bookMatch && bookMatch.moves.length >= sanSeq.length));
+
+      // Push to user move stack
+      userMoveStack.push({ from, to, san: move.san, fen: userFen, type, score: bestScore });
+      _userPlyOff = userMoveStack.length;
+      showPosition(false);
+
+      // Analyze new position for suggestion arrow (opponent's best move)
+      analyzeMultiPv(userFen).then(pvs => {
+        if (userFen !== userMoveStack[userMoveStack.length - 1].fen) return;
+        currentMultiPv = pvs;
+        if (pvs[0] && pvs[0].move) {
+          window._userSuggestion = { from: pvs[0].move.slice(0, 2), to: pvs[0].move.slice(2, 4) };
+          if (!$('#boardArrowLayer').length) {
+            $('#board').append('<svg id="boardArrowLayer" xmlns="http://www.w3.org/2000/svg" style="position: absolute; top: 0; left: 0; pointer-events: none; z-index: 50;"></svg>');
+          }
+          positionArrowLayer();
+          drawSuggestionArrow();
+        }
+      });
+
       updateEvalBar(bestScore);
       return true;
     }
 
     function onUserDragStart(source, piece, position, orientation) {
       if (analysisRunning) return false;
+      if (selectedSquare && source !== selectedSquare) return false;
       currentMultiPv = [];
-      const moves = showLegalMoves(source);
-      const fen = userFen || fens[currentPly];
-      analyzeMultiPv(fen).then(pvs => { currentMultiPv = pvs; });
+      showLegalMoves(source);
+      const fen = getCurrentFen();
+      analyzeMultiPv(fen).then(pvs => {
+        if ((getCurrentFen()) !== fen) return;
+        currentMultiPv = pvs;
+      });
       return true;
     }
 
     function onUserDrop(source, target, piece, newPos, oldPos, orientation) {
+      if (source === target) {
+        if (!selectedSquare) return "snapback";
+        return true;
+      }
       clearLegalHighlights();
+      selectedSquare = null;
       onUserMove(source, target).then(ok => {
-        if (!ok) board.position(userFen || fens[currentPly]);
+        if (!ok) board.position(getCurrentFen());
       });
       return true;
     }
@@ -1362,33 +1497,98 @@
     function onUserSnapEnd() {}
 
     function setupClickToMove() {
-      $(document).on('click', '.square-55d63', function(e) {
-        if (analysisRunning || !pgnValid) return;
+      function sqFromXY(px, py) {
         const bw = $('#board').width();
+        if (!bw) return null;
         const cell = bw / 8;
         const off = $('#board').offset();
-        const rx = e.pageX - off.left, ry = e.pageY - off.top;
+        const rx = px - off.left, ry = py - off.top;
+        if (rx < 0 || rx > bw || ry < 0 || ry > bw) return null;
         const f = Math.floor(rx / cell), r = Math.floor(ry / cell);
-        if (f < 0 || f > 7 || r < 0 || r > 7) return;
-        const sq = FILES[boardOrientation === 'black' ? 7 - f : f] + (boardOrientation === 'black' ? r + 1 : 8 - r);
+        return FILES[boardOrientation === 'black' ? 7 - f : f] + (boardOrientation === 'black' ? r + 1 : 8 - r);
+      }
 
+      function selectPiece(sq) {
+        selectedSquare = sq;
+        currentMultiPv = [];
+        showLegalMoves(sq);
+        const fen = getCurrentFen();
+        analyzeMultiPv(fen).then(pvs => {
+          if ((getCurrentFen()) !== fen) return;
+          currentMultiPv = pvs;
+        });
+      }
+
+      // Desktop: show legal moves on mousedown, handle move on mouseup
+      let _mdX = 0, _mdY = 0;
+      $('#board').on('mousedown', function(e) {
+        if (e.button !== 0 || analysisRunning || !pgnValid) return;
+        _mdX = e.pageX; _mdY = e.pageY;
+        const sq = sqFromXY(e.pageX, e.pageY);
+        if (!sq) return;
+        const c = new Chess();
+        c.load(getCurrentFen());
         if (!selectedSquare) {
-          const c = new Chess();
-          c.load(userFen || fens[currentPly]);
           if (!c.get(sq)) return;
-          selectedSquare = sq;
-          currentMultiPv = [];
-          const moves = showLegalMoves(sq);
-          const fen = userFen || fens[currentPly];
-          analyzeMultiPv(fen).then(pvs => { currentMultiPv = pvs; });
+          selectPiece(sq);
         } else {
+          if (sq === selectedSquare) { selectedSquare = null; clearLegalHighlights(); return; }
+          if (c.get(sq) && c.get(sq).color === c.get(selectedSquare).color) {
+            selectPiece(sq);
+          }
+        }
+      });
+      $('#board').on('mouseup', function(e) {
+        if (e.button !== 0 || analysisRunning || !pgnValid) return;
+        const dx = Math.abs(e.pageX - _mdX);
+        const dy = Math.abs(e.pageY - _mdY);
+        if (dx > 10 || dy > 10) { selectedSquare = null; clearLegalHighlights(); return; }
+        if (!selectedSquare) return;
+        const sq = sqFromXY(e.pageX, e.pageY);
+        if (!sq) return;
+        const c = new Chess();
+        c.load(getCurrentFen());
+        if (c.get(sq) && c.get(sq).color === c.get(selectedSquare).color) return;
+        const src = selectedSquare;
+        const isLegal = c.moves({ square: src, verbose: true }).some(m => m.to === sq);
+        if (!isLegal) { selectedSquare = null; clearLegalHighlights(); return; }
+        selectedSquare = null;
+        clearLegalHighlights();
+        onUserMove(src, sq);
+      });
+
+      // Touch support (tap only)
+      let _tx = 0, _ty = 0;
+      $('#board').on('touchstart', function(e) {
+        if (analysisRunning || !pgnValid) return;
+        const t = e.originalEvent.changedTouches[0];
+        _tx = t.pageX; _ty = t.pageY;
+      });
+      $('#board').on('touchend', function(e) {
+        if (analysisRunning || !pgnValid) return;
+        const t = e.originalEvent.changedTouches[0];
+        const dx = Math.abs(t.pageX - _tx);
+        const dy = Math.abs(t.pageY - _ty);
+        if (dx > 20 || dy > 20) return;
+        const sq = sqFromXY(t.pageX, t.pageY);
+        if (!sq) return;
+        const c = new Chess();
+        c.load(getCurrentFen());
+        if (!selectedSquare) {
+          if (!c.get(sq)) return;
+          selectPiece(sq);
+        } else {
+          if (sq === selectedSquare) { selectedSquare = null; clearLegalHighlights(); return; }
+          if (c.get(sq) && c.get(sq).color === c.get(selectedSquare).color) {
+            selectPiece(sq);
+            return;
+          }
           const src = selectedSquare;
+          const isLegal = c.moves({ square: src, verbose: true }).some(m => m.to === sq);
+          if (!isLegal) { selectedSquare = null; clearLegalHighlights(); return; }
           selectedSquare = null;
           clearLegalHighlights();
-          if (sq === src) return;
-          onUserMove(src, sq).then(ok => {
-            if (!ok) board.position(userFen || fens[currentPly]);
-          });
+          onUserMove(src, sq);
         }
       });
     }
@@ -1536,7 +1736,7 @@
         }] },
         options: {
           responsive: true, maintainAspectRatio: false,
-          onClick: (evt, elements) => { if (elements.length > 0) goToPly(elements[0].index); },
+          onClick: (evt, elements) => { if (elements.length > 0) navToPly(elements[0].index); },
           plugins: {
             legend: { display: false },
             tooltip: { callbacks: { label: (c) => {
@@ -1558,8 +1758,7 @@
     // 12. INIT
     // ============================================================
     openingsReady.then(() => updateOpeningInfo(0));
-    renderMoveList();
-    updateBoard(false);
+    showPosition(false);
 
     if (pgnValid) {
       setTimeout(() => $('#startAnalysisBtn').trigger('click'), 600);

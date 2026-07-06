@@ -174,17 +174,21 @@ app.get('/api/openings', (req, res) => {
 // Midtrans Snap client (for QRIS donations on the Support page)
 // ------------------------------------------------------------------
 const midtransClient = require('midtrans-client');
+const snap = new midtransClient.Snap({
+  isProduction: true,
+  serverKey: process.env.MIDTRANS_SERVER_KEY || '',
+});
 const coreApi = new midtransClient.CoreApi({
-  isProduction: true, // set to false for sandbox
+  isProduction: true,
   serverKey: process.env.MIDTRANS_SERVER_KEY || '',
 });
 
 app.get('/', (req, res) => res.render('index'));
-app.get('/support', (req, res) => res.render('support'));
+app.get('/support', (req, res) => res.render('support', { midtransClientKey: process.env.MIDTRANS_CLIENT_KEY || '' }));
 app.get('/faq', (req, res) => res.render('faq'));
 app.get('/about', (req, res) => res.render('about'));
 
-// Midtrans QRIS — langsung charge QRIS via Core API, tanpa Snap popup
+// Midtrans Snap — popup payment (bisa pilih metode: QRIS, GoPay, VA, dll)
 app.post('/api/midtrans/transaction', express.json(), async (req, res) => {
   const { amount, donorName, donorEmail } = req.body;
   if (!amount || amount < 1000) {
@@ -192,8 +196,7 @@ app.post('/api/midtrans/transaction', express.json(), async (req, res) => {
   }
   const orderId = 'CR-DONATION-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
   try {
-    const charge = await coreApi.charge({
-      payment_type: 'qris',
+    const transaction = await snap.createTransaction({
       transaction_details: {
         order_id: orderId,
         gross_amount: amount,
@@ -203,15 +206,13 @@ app.post('/api/midtrans/transaction', express.json(), async (req, res) => {
         email: donorEmail || 'donatur@chessreview.app',
       },
     });
-    const qrAction = (charge.actions || []).find(a => a.name === 'generate-qr-code');
     res.json({
+      token: transaction.token,
       order_id: orderId,
-      transaction_id: charge.transaction_id,
-      qr_url: qrAction ? qrAction.url : null,
     });
   } catch (err) {
     console.error('Midtrans error:', err.message);
-    res.status(500).json({ error: 'Gagal membuat QRIS: ' + err.message });
+    res.status(500).json({ error: 'Gagal membuat transaksi: ' + err.message });
   }
 });
 

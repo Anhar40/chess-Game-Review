@@ -12,6 +12,7 @@
   <script src="/cdn/tailwind"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
   <script src="/cdn/jquery.min.js"></script>
+  <script src="https://app.midtrans.com/snap/snap.js" data-client-key="<%= midtransClientKey %>"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
@@ -90,8 +91,8 @@
       <div class="max-w-xl mx-auto mb-16" id="qrisCard">
         <div class="support-card">
           <div class="w-18 h-18 mx-auto mb-4" style="width:72px;height:72px;border-radius:20px;background:rgba(34,197,94,0.08);display:flex;align-items:center;justify-content:center;font-size:32px;margin-left:auto;margin-right:auto"><i class="fas fa-credit-card"></i></div>
-          <h2 class="text-xl font-bold text-[#F8FAFC] mb-2">QRIS Donation</h2>
-          <p class="text-[rgba(248,250,252,0.4)] text-sm mb-6">Donasi cepat via QRIS — scan QR dari aplikasi e-wallet atau mobile banking</p>
+          <h2 class="text-xl font-bold text-[#F8FAFC] mb-2">Donasi</h2>
+          <p class="text-[rgba(248,250,252,0.4)] text-sm mb-6">Dukung pengembangan website ini — pilih metode pembayaran (QRIS, GoPay, VA, dll)</p>
 
           <!-- Payment Form -->
           <div id="payForm" class="space-y-4 text-left">
@@ -116,7 +117,7 @@
               <input type="number" id="customAmount" placeholder="Masukkan jumlah" class="form-input hidden" min="1000" step="500">
             </div>
             <button onclick="payWithQRIS()" id="payBtn" class="btn-primary w-full justify-center text-base py-4 mt-2">
-              <i class="fas fa-credit-card"></i> Donasi via QRIS
+              <i class="fas fa-credit-card"></i> Donasi Sekarang
             </button>
             <div id="qrisLoading" class="hidden flex items-center gap-3 justify-center py-4">
               <div class="spinner"></div>
@@ -127,14 +128,7 @@
             </div>
           </div>
 
-          <!-- QR Code Display -->
-          <div id="qrDisplay" class="hidden flex flex-col items-center gap-4 py-4">
-            <img id="qrImage" src="" alt="QR Code" class="w-56 h-56 rounded-xl bg-white p-2" style="image-rendering:pixelated">
-            <p class="text-[rgba(248,250,252,0.5)] text-xs">Scan QR ini dengan aplikasi e-wallet atau mobile banking</p>
-            <p id="qrOrderId" class="text-[rgba(248,250,252,0.2)] text-xs"></p>
-            <div id="qrStatus" class="text-sm"></div>
-            <button onclick="resetQR()" class="btn-secondary text-sm px-5 py-2.5"><i class="fas fa-arrow-left"></i> Kembali</button>
-          </div>
+          <!-- Snap popup (tidak buka tab baru) -->
         </div>
       </div>
 
@@ -230,49 +224,19 @@
         data: JSON.stringify({ amount: amount, donorName: name || 'Donatur', donorEmail: email || 'donatur@chessreview.app' }),
         success: function(res) {
           showLoading(false);
-          if (res.qr_url) {
-            document.getElementById('payForm').classList.add('hidden');
-            document.getElementById('qrDisplay').classList.remove('hidden');
-            document.getElementById('qrImage').src = res.qr_url;
-            document.getElementById('qrOrderId').textContent = res.order_id;
-            pollStatus(res.order_id);
+          if (res.token) {
+            snap.pay(res.token);
           } else {
-            showError('Gagal mendapatkan QR code');
+            showError('Gagal mendapatkan token pembayaran');
           }
         },
         error: function(xhr) {
           showLoading(false);
-          var msg = 'Gagal membuat QRIS';
+          var msg = 'Gagal membuat transaksi';
           if (xhr.responseJSON && xhr.responseJSON.error) msg = xhr.responseJSON.error;
           showError(msg);
         }
       });
-    }
-
-    function pollStatus(orderId) {
-      var check = setInterval(function() {
-        $.get('/api/midtrans/status/' + orderId, function(res) {
-          if (res.transaction_status === 'settlement' || res.transaction_status === 'capture') {
-            clearInterval(check);
-            document.getElementById('qrStatus').innerHTML = '<span class="text-[#22C55E] font-semibold"><i class="fas fa-check-circle"></i> Pembayaran berhasil! Terima kasih.</span>';
-          } else if (res.transaction_status === 'expire' || res.transaction_status === 'deny' || res.transaction_status === 'cancel') {
-            clearInterval(check);
-            document.getElementById('qrStatus').innerHTML = '<span class="text-[#EF4444] font-semibold"><i class="fas fa-times-circle"></i> Pembayaran tidak selesai. <button onclick="resetQR()" class="underline">Coba lagi</button></span>';
-          } else if (res.transaction_status === 'pending') {
-            document.getElementById('qrStatus').innerHTML = '<span class="text-[#F59E0B] font-semibold"><i class="fas fa-clock"></i> Menunggu pembayaran...</span>';
-          }
-        });
-      }, 3000);
-      window._qrPoll = check;
-    }
-
-    function resetQR() {
-      if (window._qrPoll) clearInterval(window._qrPoll);
-      document.getElementById('payForm').classList.remove('hidden');
-      document.getElementById('qrDisplay').classList.add('hidden');
-      document.getElementById('qrImage').src = '';
-      document.getElementById('qrStatus').innerHTML = '';
-      hideError();
     }
 
     function showLoading(v) {

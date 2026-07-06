@@ -6,7 +6,7 @@
 - jQuery, chessboard.js, chess.js **0.12.0**, Chart.js, Stockfish 10.0.2 — all served through a built-in CDN proxy to avoid tracking-prevention blocking
 - chess.com public API for game data (proxied server-side to avoid CORS)
 - UI language is **Indonesian** (`lang="id"`)
-- Midtrans Snap API for QRIS donations (sandbox by default; set `isProduction: true` in `server.js` for production)
+- Midtrans Snap API for QRIS donations (currently `isProduction: true` in `server.js:178`; set to `false` for sandbox)
 
 ## Commands
 
@@ -31,7 +31,6 @@
   - `/` — renders `views/index.ejs` (landing page with search form)
   - `/support` — renders `views/support.ejs` (Midtrans QRIS donation page)
   - `/faq` — renders `views/faq.ejs` (FAQ accordion page)
-  - `/contact` — renders `views/contact.ejs` (contact form page)
   - `/about` — renders `views/about.ejs` (about page with timeline & stats)
   - `/game?pgn=...` — renders `views/game.ejs` (board + Stockfish analysis)
   - `/cdn/:name` — proxies CDN assets (1-hour in-memory cache)
@@ -53,4 +52,4 @@
 - Analysis auto-starts on page load (600ms delay). Keyboard nav: `ArrowLeft`/`ArrowRight`/`Home`/`End`.
 - Month/year selects are populated client-side (avoids server-timezone mismatch).
 - Chess.com API rejects requests without a `User-Agent` header. The proxy sets `ChessAnalyzerLite/1.0`.
-- Midtrans integration is in sandbox mode by default; set `isProduction: true` in `server.js` for live payments.
+- Midtrans integration is in production mode (`isProduction: true` in `server.js:178`). Set to `false` for sandbox testing.
