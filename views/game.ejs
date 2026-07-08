@@ -187,6 +187,7 @@
                 <option value="10" selected>10</option>
                 <option value="12">12</option>
                 <option value="15">15 (lambat)</option>
+                <option value="18">18 (dalam)</option>
               </select>
             </div>
             <button id="startAnalysisBtn"
@@ -499,6 +500,7 @@
     // ============================================================
     let currentPly = 0;
     let board = null;
+    let _suggestionFromNext = false;
 
     function computeBoardWidth() {
       const wrap = document.getElementById('boardWrap');
@@ -578,6 +580,153 @@
 
     let classifications = [];
     let bestMoves = [];
+    const PIECE_VALUES = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
+
+    function isUserBrilliant(fenBefore, move, evalScore) {
+      if (Math.abs(evalScore) >= 900) return false;
+      if (!move || !move.from || !move.to) return false;
+
+      const c = new Chess();
+      c.load(fenBefore);
+
+      // Not forced
+      if (c.moves({ verbose: true }).length <= 1) return false;
+
+      try { c.move(move.san, { sloppy: true }); } catch (e) { return false; }
+
+      const destPiece = c.get(move.to);
+      if (!destPiece) return false;
+      const movedValue = PIECE_VALUES[destPiece.type] || 0;
+
+      // Check if opponent can capture our piece
+      let totalSacLoss = 0;
+      const oppMoves = c.moves({ verbose: true });
+
+      function checkSacU(capFen, capSan) {
+        const ck = new Chess(capFen);
+        try { ck.move(capSan, { sloppy: true }); } catch (e) { return 0; }
+        let bestR = 0;
+        for (const ourM of ck.moves({ verbose: true })) {
+          if (ourM.to === move.to && ourM.captured) bestR = Math.max(bestR, PIECE_VALUES[ourM.captured] || 0);
+        }
+        const nLoss = movedValue - bestR;
+        return (movedValue >= 3 && nLoss > 0) ? nLoss : 0;
+      }
+
+      // 1) Direct capture
+      for (const oppMove of oppMoves) {
+        if (oppMove.to === move.to && oppMove.captured) {
+          totalSacLoss = Math.max(totalSacLoss, checkSacU(c.fen(), oppMove.san));
+        }
+      }
+
+      // 2) Capture after check sequence
+      if (totalSacLoss <= 0) {
+        for (const oppMove of oppMoves) {
+          if (oppMove.to === move.to || oppMove.captured) continue;
+          const cTemp = new Chess(c.fen());
+          try { cTemp.move(oppMove.san, { sloppy: true }); } catch (e) { continue; }
+          if (!cTemp.in_check()) continue;
+          const replies = cTemp.moves({ verbose: true });
+          if (replies.length !== 1) continue;
+          cTemp.move(replies[0].san, { sloppy: true });
+          for (const nextOpp of cTemp.moves({ verbose: true })) {
+            if (nextOpp.to === move.to && nextOpp.captured) {
+              totalSacLoss = Math.max(totalSacLoss, checkSacU(cTemp.fen(), nextOpp.san));
+            }
+          }
+          if (totalSacLoss > 0) break;
+        }
+      }
+
+      return totalSacLoss > 0;
+    }
+
+    function isBrilliant(ply, evalBefore, evalAfterPlayed, loss) {
+      if (Math.abs(evalBefore) >= 900) return false;
+
+      const move = history[ply - 1];
+      if (!move || !move.from || !move.to) return false;
+
+      const c = new Chess();
+      const fenBefore = fens[ply - 1];
+      if (!fenBefore) return false;
+      c.load(fenBefore);
+
+      // Not forced — must have at least 2 legal moves
+      const allMoves = c.moves({ verbose: true });
+      if (allMoves.length <= 1) return false;
+
+      // Not a direct recapture (capturing on same square opponent just captured from)
+      if (ply >= 2) {
+        const prevMove = history[ply - 2];
+        if (prevMove && prevMove.captured && move.to === prevMove.to) return false;
+      }
+
+      const inCheck = c.in_check();
+
+      // Make the move to see the resulting position
+      try { c.move(move.san, { sloppy: true }); } catch (e) { return false; }
+
+      const destPiece = c.get(move.to);
+      if (!destPiece) return false;
+      const movedType = destPiece.type;
+      const movedValue = PIECE_VALUES[movedType] || 0;
+
+      // Sacrifice detection: check if opponent can capture our moved piece
+      let totalSacrificeLoss = 0;
+      const oppMoves = c.moves({ verbose: true });
+
+      function checkSacrifice(captureFen, captureMoveSan) {
+        const ck = new Chess(captureFen);
+        try { ck.move(captureMoveSan, { sloppy: true }); } catch (e) { return 0; }
+        let bestRecap = 0;
+        for (const ourMove of ck.moves({ verbose: true })) {
+          if (ourMove.to === move.to && ourMove.captured) {
+            bestRecap = Math.max(bestRecap, PIECE_VALUES[ourMove.captured] || 0);
+          }
+        }
+        const netLoss = movedValue - (PIECE_VALUES[move.captured] || 0) - bestRecap;
+        return (movedValue >= 3 && netLoss > 0) ? netLoss : 0;
+      }
+
+      // 1) Direct capture in next ply
+      for (const oppMove of oppMoves) {
+        if (oppMove.to === move.to && oppMove.captured) {
+          totalSacrificeLoss = Math.max(totalSacrificeLoss, checkSacrifice(c.fen(), oppMove.san));
+        }
+      }
+
+      // 2) Opponent check + forced response enables the capture later
+      if (totalSacrificeLoss <= 0) {
+        for (const oppMove of oppMoves) {
+          if (oppMove.to === move.to || oppMove.captured) continue;
+          const cTemp = new Chess(c.fen());
+          try { cTemp.move(oppMove.san, { sloppy: true }); } catch (e) { continue; }
+          if (!cTemp.in_check()) continue;
+          const ourReplies = cTemp.moves({ verbose: true });
+          if (ourReplies.length !== 1) continue;
+          cTemp.move(ourReplies[0].san, { sloppy: true });
+          for (const nextOpp of cTemp.moves({ verbose: true })) {
+            if (nextOpp.to === move.to && nextOpp.captured) {
+              totalSacrificeLoss = Math.max(totalSacrificeLoss, checkSacrifice(cTemp.fen(), nextOpp.san));
+            }
+          }
+          if (totalSacrificeLoss > 0) break;
+        }
+      }
+
+      if (totalSacrificeLoss <= 0) return false;
+
+      // Position stays favorable (not worse than -100cp for the mover)
+      const evalForMover = (ply % 2 === 1) ? evalAfterPlayed : -evalAfterPlayed;
+      if (evalForMover < -100) return false;
+
+      // If was in check, ensure position doesn't become losing
+      if (inCheck && evalForMover < -100) return false;
+
+      return true;
+    }
 
     function classifyMove(ply, evalBefore, evalAfterPlayed, evalAfterBest, isMissedWin) {
       if (bookPlies[ply]) return 'book';
@@ -590,12 +739,17 @@
       const playedBestMove = bm && bm.isPlayedMove;
 
       if (isMissedWin) return 'missed';
-      if (playedBestMove) return 'best';
+      if (isBrilliant(ply, evalBefore, evalAfterPlayed, loss)) return 'brilliant';
+      if (playedBestMove) {
+        const improvement = isWhiteMove ? (evalAfterPlayed - evalBefore) : (evalBefore - evalAfterPlayed);
+        if (improvement >= 50) return 'great';
+        return 'best';
+      }
 
       if (loss <= 30) return 'excellent';
       if (loss <= 110) return 'good';
-      if (loss <= 180) return 'inaccuracy';
-      if (loss <= 350) return 'mistake';
+      if (loss <= 280) return 'inaccuracy';
+      if (loss <= 530) return 'mistake';
       return 'blunder';
     }
 
@@ -710,14 +864,18 @@
     }
 
     function drawSuggestionArrow() {
-      if (_userPlyOff === 0 && bookPlies[currentPly]) return;
+      if (_userPlyOff === 0 && !_suggestionFromNext && !window._userSuggestion) return;
+      if (_userPlyOff === 0 && bookPlies[currentPly] && !window._userSuggestion) return;
       const $svg = $('#boardArrowLayer');
       if (!$svg.length) return;
       $svg.find('.arrow-group').remove();
       if (!$('#arrowToggle').is(':checked')) return;
 
-      const suggestion = (_userPlyOff > 0 ? window._userSuggestion : null) || bestMoves[currentPly];
+      const suggestion = (_userPlyOff > 0 ? window._userSuggestion : null)
+        || (currentPly > 0 ? bestMoves[currentPly - 1] : bestMoves[0]);
       if (!suggestion || !suggestion.from || !suggestion.to) return;
+      // Don't show if the played move was already engine's best move
+      if (_userPlyOff === 0 && suggestion.isPlayedMove) return;
 
       const boardWidthPx = $('#board').width();
       const ns = 'http://www.w3.org/2000/svg';
@@ -797,7 +955,7 @@
         board.position(fens[currentPly]);
       }
 
-      $('#moveCounter').text(`${ply} / ${totalMoves + userMoveStack.length}`);
+      $('#moveCounter').text(`${ply} / ${totalMoves}`);
       renderMoveList(ply, isUserMove);
       updateOpeningInfo(currentPly);
       syncBottomBar();
@@ -845,22 +1003,20 @@
 
     function navPrev(playSound) {
       if (!pgnValid) return;
-      const cur = currentPly + _userPlyOff;
-      if (cur <= 0) return;
-      const prevPly = cur - 1;
-      if (prevPly <= totalMoves) { currentPly = prevPly; _userPlyOff = 0; }
-      else { currentPly = totalMoves; _userPlyOff = prevPly - totalMoves; }
+      if (currentPly <= 0) return;
+      currentPly--;
+      _userPlyOff = 0;
+      _suggestionFromNext = false;
       showPosition(playSound);
     }
 
     function navNext(playSound) {
       if (!pgnValid) return;
       const cur = currentPly + _userPlyOff;
-      const total = totalMoves + userMoveStack.length;
-      if (cur >= total) return;
+      if (cur >= totalMoves) return;
       const nextPly = cur + 1;
-      if (nextPly <= totalMoves) { currentPly = nextPly; _userPlyOff = 0; }
-      else { currentPly = totalMoves; _userPlyOff = nextPly - totalMoves; }
+      currentPly = nextPly; _userPlyOff = 0;
+      _suggestionFromNext = true;
       showPosition(playSound);
     }
 
@@ -868,33 +1024,28 @@
       if (!pgnValid) return;
       const changed = currentPly > 0 || _userPlyOff > 0;
       currentPly = 0; _userPlyOff = 0;
+      _suggestionFromNext = false;
       if (changed) showPosition(playSound);
     }
 
     function navLast(playSound) {
       if (!pgnValid) return;
-      const prev = currentPly + _userPlyOff;
-      const maxPly = totalMoves + userMoveStack.length;
-      if (maxPly <= totalMoves) { currentPly = maxPly; _userPlyOff = 0; }
-      else { currentPly = totalMoves; _userPlyOff = maxPly - totalMoves; }
-      if (currentPly + _userPlyOff !== prev) showPosition(playSound);
+      const was = currentPly + _userPlyOff;
+      currentPly = totalMoves; _userPlyOff = 0;
+      _suggestionFromNext = false;
+      if (currentPly !== was) showPosition(playSound);
     }
 
     function navToPly(ply, playSound) {
       if (!pgnValid) return;
       if (ply < 0) ply = 0;
-      const maxPly = totalMoves + userMoveStack.length;
-      if (ply > maxPly) ply = maxPly;
+      if (ply > totalMoves) ply = totalMoves;
       const was = currentPly + _userPlyOff;
-      if (ply <= totalMoves) {
-        currentPly = ply;
-        _userPlyOff = 0;
-        clearUserHighlights();
-      } else {
-        currentPly = totalMoves;
-        _userPlyOff = ply - totalMoves;
-      }
-      if (currentPly + _userPlyOff !== was) showPosition(playSound);
+      currentPly = ply;
+      _userPlyOff = 0;
+      clearUserHighlights();
+      _suggestionFromNext = false;
+      if (currentPly !== was) showPosition(playSound);
     }
 
     // Re-bind navigation event handlers
@@ -992,6 +1143,17 @@
         $fill.css('height', '50%').removeClass('bg-green-600 bg-red-600').addClass('bg-gray-500');
         $text.text('?');
         return;
+      }
+
+      // Checkmate detection
+      if (currentPly > 0 && currentPly <= totalMoves) {
+        const lastMove = history[currentPly - 1];
+        if (lastMove && lastMove.san && lastMove.san.endsWith('#')) {
+          $fill.css('height', '50%').removeClass('bg-green-600 bg-red-600').addClass('bg-red-600');
+          const winner = lastMove.color === 'w' ? '1-0' : '0-1';
+          $text.text('#' + winner);
+          return;
+        }
       }
       let clamped = Math.max(-1000, Math.min(1000, score));
       if (boardOrientation === 'black') clamped = -clamped;
@@ -1377,7 +1539,7 @@
       const bw = $('#board').width();
       const cell = bw / 8;
       const label = isBook ? '📖' : (MOVE_ICONS[type] ? MOVE_ICONS[type].icon : '');
-      const color = isBook ? '#b58863' : (type === 'best' ? '#81b64c' : (type === 'excellent' ? '#81b64c' : '#95b776'));
+      const color = isBook ? '#b58863' : (type === 'brilliant' ? '#1baaa6' : (type === 'best' ? '#81b64c' : (type === 'excellent' ? '#81b64c' : '#95b776')));
       const p = squareToPixel(moveTo, bw);
       const size = Math.max(24, cell * 0.55);
       $('<div>', { class: 'pv-badge', css: {
@@ -1435,6 +1597,11 @@
         if (result.bestMove && playedUci === result.bestMove) type = 'best';
       }
 
+      // Upgrade to brilliant if criteria met
+      if ((type === 'best' || type === 'excellent') && isUserBrilliant(fenBefore, move, bestScore)) {
+        type = 'brilliant';
+      }
+
       const meta = MOVE_ICONS[type] || MOVE_ICONS.good;
       $('#moveClassifyCallout').removeClass('hidden')
         .html(`<span class="${meta.cls}">${move.san}  ${meta.icon}  ${meta.label}</span>`)
@@ -1477,6 +1644,15 @@
       analyzeMultiPv(fen).then(pvs => {
         if ((getCurrentFen()) !== fen) return;
         currentMultiPv = pvs;
+        // Show suggestion before user makes a move
+        if (pvs[0] && pvs[0].move) {
+          window._userSuggestion = { from: pvs[0].move.slice(0, 2), to: pvs[0].move.slice(2, 4) };
+          if (!$('#boardArrowLayer').length) {
+            $('#board').append('<svg id="boardArrowLayer" xmlns="http://www.w3.org/2000/svg" style="position: absolute; top: 0; left: 0; pointer-events: none; z-index: 50;"></svg>');
+          }
+          positionArrowLayer();
+          drawSuggestionArrow();
+        }
       });
       return true;
     }
