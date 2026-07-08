@@ -63,11 +63,15 @@
     #analysisOverlay.show { opacity: 1; visibility: visible; }
     #adRow { margin-bottom: 20px; max-width: 100%; }
     #adRow > #container-58377c017129b108965cda8fb76fc4c2 {
-      display: flex; flex-wrap: wrap; justify-content: center; gap: 6px;
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 4px;
     }
-    #adRow img, #adRow iframe { max-width: 150px; height: auto; }
+    #container-58377c017129b108965cda8fb76fc4c2 > * {
+      max-width: 140px !important; width: auto !important; height: auto !important;
+    }
     @media (max-width: 640px) {
-      #adRow img, #adRow iframe { max-width: 120px; }
+      #container-58377c017129b108965cda8fb76fc4c2 > * {
+        max-width: 90px !important;
+      }
     }
 
     #bottomActionBar {
