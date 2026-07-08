@@ -61,18 +61,9 @@
       transition: opacity 0.4s ease, visibility 0.4s ease;
     }
     #analysisOverlay.show { opacity: 1; visibility: visible; }
-    #adRow { margin-bottom: 20px; max-width: 100%; }
-    #adRow > #container-58377c017129b108965cda8fb76fc4c2 {
-      display: flex; flex-wrap: wrap; justify-content: center; gap: 4px;
-    }
-    #container-58377c017129b108965cda8fb76fc4c2 > * {
-      max-width: 140px !important; width: auto !important; height: auto !important;
-    }
-    @media (max-width: 640px) {
-      #container-58377c017129b108965cda8fb76fc4c2 > * {
-        max-width: 90px !important;
-      }
-    }
+    #adRow { margin-bottom: 20px; width: 100%; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; }
+    #container-58377c017129b108965cda8fb76fc4c2 { display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; gap: 4px; }
+    #container-58377c017129b108965cda8fb76fc4c2 > * { flex: 0 0 auto !important; }
 
     #bottomActionBar {
       position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
@@ -318,8 +309,7 @@
   </div>
   <div id="analysisOverlay">
     <div id="adRow">
-      <div id="container-58377c017129b108965cda8fb76fc4c2"></div>
-      <script async="async" data-cfasync="false" src="https://crazylatchdisturbance.com/58377c017129b108965cda8fb76fc4c2/invoke.js"></script>
+      <div id="container-58377c017129b108965cda8fb76fc4c2"><script data-cfasync="false" src="https://crazylatchdisturbance.com/58377c017129b108965cda8fb76fc4c2/invoke.js"></script></div>
     </div>
     <div id="loadingContent" class="text-center">
       <div class="w-14 h-14 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-5"></div>
