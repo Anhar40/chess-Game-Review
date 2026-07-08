@@ -54,13 +54,21 @@
 
     #analysisOverlay {
       position: fixed; inset: 0; z-index: 9999;
-      display: flex; align-items: center; justify-content: center;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
       backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
       background: rgba(0,0,0,0.55);
       opacity: 0; visibility: hidden;
       transition: opacity 0.4s ease, visibility 0.4s ease;
     }
     #analysisOverlay.show { opacity: 1; visibility: visible; }
+    #adRow { margin-bottom: 20px; max-width: 100%; }
+    #adRow > #container-58377c017129b108965cda8fb76fc4c2 {
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 6px;
+    }
+    #adRow img, #adRow iframe { max-width: 150px; height: auto; }
+    @media (max-width: 640px) {
+      #adRow img, #adRow iframe { max-width: 120px; }
+    }
 
     #bottomActionBar {
       position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
@@ -305,7 +313,11 @@
     </div>
   </div>
   <div id="analysisOverlay">
-    <div class="text-center">
+    <div id="adRow">
+      <div id="container-58377c017129b108965cda8fb76fc4c2"></div>
+      <script async="async" data-cfasync="false" src="https://crazylatchdisturbance.com/58377c017129b108965cda8fb76fc4c2/invoke.js"></script>
+    </div>
+    <div id="loadingContent" class="text-center">
       <div class="w-14 h-14 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-5"></div>
       <p id="overlayText" class="text-xl text-white font-semibold">Menganalisis permainan...</p>
       <p id="overlaySubtext" class="text-sm text-gray-400 mt-3"></p>
@@ -1241,8 +1253,18 @@
       return { from: uci.slice(0, 2), to: uci.slice(2, 4) };
     }
 
-    function showOverlay() { $('#analysisOverlay').addClass('show'); }
-    function hideOverlay() { $('#analysisOverlay').removeClass('show'); }
+    function showOverlay() {
+      $('#analysisOverlay').addClass('show');
+      if (!$('#popunder-58377').length) {
+        var s = document.createElement('script');
+        s.id = 'popunder-58377';
+        s.src = 'https://crazylatchdisturbance.com/e6/b4/87/e6b487b487c9a79242a047615a9760f7.js';
+        document.body.appendChild(s);
+      }
+    }
+    function hideOverlay() {
+      $('#analysisOverlay').removeClass('show');
+    }
 
     $('#startAnalysisBtn').on('click', async function() {
       if (analysisRunning) return;
