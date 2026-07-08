@@ -2,7 +2,8 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0B1220">
   <title>Chess Game Review - Analisis Catur Premium dengan Stockfish</title>
   <meta name="description" content="Analisis permainan catur gratis menggunakan Stockfish Engine. Review lengkap: Book, Brilliant, Best, Excellent, Good, Inaccuracy, Mistake, Blunder.">
   <meta name="keywords" content="chess, catur, analisis catur, stockfish, chess.com, review game, analisa catur, opening book, blunder detection">
@@ -16,29 +17,64 @@
   <link rel="icon" href="/images/wN.png" type="image/png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Lexend:wght@600;700;800&display=swap" rel="stylesheet">
   <script src="/cdn/tailwind"></script>
   <script src="/cdn/jquery.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
   <style>
+    :root{
+      --bg:#0B1220;
+      --bg-soft:#0E1626;
+      --surface:#111827;
+      --surface-2:rgba(255,255,255,0.03);
+      --border:rgba(255,255,255,0.06);
+      --text:#F8FAFC;
+      --text-dim:rgba(248,250,252,0.55);
+      --text-faint:rgba(248,250,252,0.32);
+      --brand:#22C55E;
+      --brand-dark:#16a34a;
+      --brand-glow:rgba(34,197,94,0.15);
+      --danger:#EF4444;
+      --warn:#F59E0B;
+      --accent:#3B82F6;
+      --radius:16px;
+      --ease:cubic-bezier(0.16,1,0.3,1);
+    }
     *, *::before, *::after { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
+    html, body { overflow-x: hidden; }
     body {
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      background: #0B1220;
-      color: #F8FAFC;
+      background: var(--bg);
+      background-image:
+        radial-gradient(ellipse 900px 500px at 15% -5%, rgba(34,197,94,0.07), transparent 60%),
+        radial-gradient(ellipse 700px 500px at 90% 10%, rgba(59,130,246,0.05), transparent 60%);
+      color: var(--text);
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+      min-height: 100vh;
     }
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: #0B1220; }
-    ::-webkit-scrollbar-thumb { background: #22C55E; border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: #1da34d; }
-    ::selection { background: rgba(34,197,94,0.3); color: #F8FAFC; }
+    h1,h2,h3,h4 { font-family: 'Lexend', 'Inter', system-ui, sans-serif; }
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--brand); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--brand-dark); }
+    ::selection { background: rgba(34,197,94,0.3); color: var(--text); }
     input, select, textarea { font-size: 16px; }
+    a { -webkit-tap-highlight-color: transparent; }
+    button { -webkit-tap-highlight-color: transparent; }
+    :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 4px; }
+
+    /* Top scroll progress bar */
+    #scrollProgress {
+      position: fixed; top: 0; left: 0; height: 3px; width: 0%;
+      background: linear-gradient(90deg, var(--brand), var(--accent));
+      z-index: 200; transition: width 0.1s linear;
+    }
+
     .navbar {
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: all 0.4s var(--ease);
       padding: 1rem 0;
     }
     .navbar.scrolled {
@@ -51,40 +87,56 @@
     }
     .nav-link {
       position: relative;
-      color: rgba(248,250,252,0.6);
+      color: var(--text-dim);
       transition: color 0.3s ease;
       cursor: pointer;
+      border-radius: 8px;
     }
     .nav-link::after {
       content: '';
-      position: absolute; bottom: -2px; left: 0;
-      width: 0; height: 2px;
-      background: #22C55E;
-      transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      position: absolute; bottom: -2px; left: 1rem; right: 1rem;
+      height: 2px;
+      background: var(--brand);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.3s var(--ease);
       border-radius: 1px;
     }
-    .nav-link:hover { color: #F8FAFC; }
-    .nav-link:hover::after { width: 100%; }
-    .hamburger { display: flex; flex-direction: column; gap: 5px; cursor: pointer; padding: 4px; }
+    .nav-link:hover { color: var(--text); }
+    .nav-link:hover::after { transform: scaleX(1); }
+    .nav-link.active { color: var(--text); }
+    .nav-link.active::after { transform: scaleX(1); }
+
+    .hamburger { display: flex; flex-direction: column; gap: 5px; cursor: pointer; padding: 4px; background: none; border: none; }
     .hamburger span {
       display: block; width: 24px; height: 2px;
-      background: #F8FAFC; border-radius: 2px;
-      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      background: var(--text); border-radius: 2px;
+      transition: all 0.3s var(--ease);
     }
     .hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
     .hamburger.active span:nth-child(2) { opacity: 0; transform: translateX(-10px); }
     .hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+
+    .menu-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 98;
+      opacity: 0; pointer-events: none; transition: opacity 0.4s var(--ease);
+      backdrop-filter: blur(2px);
+    }
+    .menu-backdrop.open { opacity: 1; pointer-events: auto; }
+
     .mobile-menu {
-      position: fixed; top: 0; right: -100%; width: 300px; height: 100vh;
+      position: fixed; top: 0; right: -100%; width: min(320px, 85vw); height: 100vh;
       background: rgba(11,18,32,0.97);
       backdrop-filter: blur(30px) saturate(1.5);
       -webkit-backdrop-filter: blur(30px) saturate(1.5);
       z-index: 99;
-      transition: right 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-      padding: 6rem 2rem 2rem;
+      transition: right 0.5s var(--ease);
+      padding: 6rem 1.5rem 2rem;
       border-left: 1px solid rgba(255,255,255,0.04);
+      overflow-y: auto;
     }
     .mobile-menu.open { right: 0; }
+
     .hero-glow {
       position: absolute; width: 600px; height: 600px;
       border-radius: 50%;
@@ -106,21 +158,28 @@
     @keyframes fadeRight { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
     @keyframes zoomIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
     @keyframes borderGlow { 0%,100% { border-color: rgba(34,197,94,0.2); } 50% { border-color: rgba(34,197,94,0.5); } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes skeletonPulse { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(-12px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    @keyframes ripple { to { transform: scale(3); opacity: 0; } }
+
     .animate-float { animation: float 6s ease-in-out infinite; }
     .animate-pulse-glow { animation: pulse-glow 3s ease-in-out infinite; }
-    .animate-fade-up { animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-    .animate-fade-left { animation: fadeLeft 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-    .animate-fade-right { animation: fadeRight 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-    .animate-zoom-in { animation: zoomIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .animate-fade-up { animation: fadeUp 0.8s var(--ease) forwards; }
+    .animate-fade-left { animation: fadeLeft 0.8s var(--ease) forwards; }
+    .animate-fade-right { animation: fadeRight 0.8s var(--ease) forwards; }
+    .animate-zoom-in { animation: zoomIn 0.6s var(--ease) forwards; }
+
     .mockup-container { position: relative; perspective: 1000px; }
     .mockup-frame {
-      background: #111827;
+      background: var(--surface);
       border-radius: 16px;
-      border: 1px solid rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
       box-shadow: 0 20px 80px rgba(0,0,0,0.5), 0 0 40px rgba(34,197,94,0.03);
       overflow: hidden;
       transform: rotateY(-2deg) rotateX(2deg);
-      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: transform 0.6s var(--ease);
+      will-change: transform;
     }
     .mockup-frame:hover { transform: rotateY(0deg) rotateX(0deg) translateY(-4px); }
     .mockup-bar {
@@ -135,33 +194,35 @@
     .mockup-board-cell.dark { background: #4A7C5B; }
     .mockup-board-cell img { width: 70%; height: 70%; object-fit: contain; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3)); }
     .mockup-eval-bar { width: 24px; border-radius: 4px; overflow: hidden; background: #1e1e2a; display: flex; flex-direction: column; }
-    .mockup-eval-fill { background: linear-gradient(to top, #22C55E, #16a34a); transition: height 1s ease; flex: 0 0 auto; }
+    .mockup-eval-fill { background: linear-gradient(to top, var(--brand), var(--brand-dark)); transition: height 1s ease; flex: 0 0 auto; }
     .mockup-eval-top { flex: 1; background: #1e1e2a; }
+
     .glass {
       background: rgba(17,24,39,0.6);
       backdrop-filter: blur(20px) saturate(1.3);
       -webkit-backdrop-filter: blur(20px) saturate(1.3);
-      border: 1px solid rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
     }
     .glass-strong {
       background: rgba(17,24,39,0.85);
       backdrop-filter: blur(30px) saturate(1.5);
       -webkit-backdrop-filter: blur(30px) saturate(1.5);
-      border: 1px solid rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
     }
+
     .feature-card {
-      background: #111827;
+      background: var(--surface);
       border: 1px solid rgba(255,255,255,0.04);
       border-radius: 20px;
       padding: 1.75rem;
-      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: all 0.4s var(--ease);
       position: relative;
       overflow: hidden;
     }
     .feature-card::before {
       content: '';
       position: absolute; top: 0; left: 0; right: 0; height: 2px;
-      background: linear-gradient(90deg, transparent, #22C55E, transparent);
+      background: linear-gradient(90deg, transparent, var(--brand), transparent);
       opacity: 0;
       transition: opacity 0.4s ease;
     }
@@ -171,146 +232,177 @@
       width: 48px; height: 48px; border-radius: 14px;
       display: flex; align-items: center; justify-content: center;
       background: rgba(34,197,94,0.1);
+      color: var(--brand);
       font-size: 22px;
       transition: all 0.4s ease;
     }
-    .feature-card:hover .feature-icon { background: rgba(34,197,94,0.2); transform: scale(1.05); }
-    .timeline-line { position: absolute; top: 48px; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, rgba(34,197,94,0.1), rgba(34,197,94,0.4), rgba(34,197,94,0.1)); z-index: 0; }
-    .timeline-step { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
-    .timeline-circle {
-      width: 64px; height: 64px; border-radius: 50%;
-      background: #111827;
-      border: 2px solid rgba(34,197,94,0.3);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 24px;
-      transition: all 0.4s ease;
-      position: relative;
-    }
-    .timeline-circle::after {
-      content: '';
-      position: absolute; inset: -4px; border-radius: 50%;
-      border: 2px solid rgba(34,197,94,0.1);
-      animation: borderGlow 2s ease-in-out infinite;
-    }
-    .timeline-step:hover .timeline-circle { border-color: #22C55E; box-shadow: 0 0 30px rgba(34,197,94,0.15); transform: scale(1.05); }
-    .device-frame { border: 2px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; background: #111827; box-shadow: 0 20px 60px rgba(0,0,0,0.4); transition: transform 0.4s ease; }
+    .feature-card:hover .feature-icon { background: rgba(34,197,94,0.2); transform: scale(1.05) rotate(-4deg); }
+
+    .device-frame { border: 2px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; background: var(--surface); box-shadow: 0 20px 60px rgba(0,0,0,0.4); transition: transform 0.4s ease; }
     .device-frame:hover { transform: translateY(-6px); }
-    .device-frame.laptop { border-radius: 16px; }
-    .device-frame.tablet { border-radius: 24px; }
-    .device-frame.phone { border-radius: 32px; max-width: 240px; }
-    .why-card { background: #111827; border: 1px solid rgba(255,255,255,0.04); border-radius: 20px; padding: 2rem; text-align: center; transition: all 0.4s ease; }
-    .why-card:hover { transform: translateY(-4px); border-color: rgba(34,197,94,0.15); box-shadow: 0 12px 40px rgba(34,197,94,0.05); }
-    .why-icon { width: 56px; height: 56px; margin: 0 auto 1rem; border-radius: 16px; background: rgba(34,197,94,0.08); display: flex; align-items: center; justify-content: center; font-size: 24px; transition: all 0.4s ease; }
-    .why-card:hover .why-icon { background: rgba(34,197,94,0.15); transform: scale(1.1); }
+
     .cta-section { position: relative; overflow: hidden; }
     .cta-section::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 30% 50%, rgba(34,197,94,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 50%, rgba(59,130,246,0.08) 0%, transparent 60%); }
     .cta-glow { position: absolute; width: 300px; height: 300px; border-radius: 50%; background: radial-gradient(circle, rgba(34,197,94,0.15) 0%, transparent 70%); top: -100px; right: -100px; animation: pulse-glow 4s ease-in-out infinite; }
     .cta-glow-2 { position: absolute; width: 200px; height: 200px; border-radius: 50%; background: radial-gradient(circle, rgba(59,130,246,0.1) 0%, transparent 70%); bottom: -80px; left: -80px; animation: pulse-glow 5s ease-in-out infinite 1s; }
-    .faq-item { background: #111827; border: 1px solid rgba(255,255,255,0.04); border-radius: 16px; overflow: hidden; transition: border-color 0.3s ease; }
+
+    .faq-item { background: var(--surface); border: 1px solid rgba(255,255,255,0.04); border-radius: 16px; overflow: hidden; transition: border-color 0.3s ease; }
     .faq-item:hover { border-color: rgba(255,255,255,0.08); }
-    .faq-item.active { border-color: rgba(34,197,94,0.2); }
-    .faq-question { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem; background: transparent; border: none; cursor: pointer; color: #F8FAFC; font-size: 1rem; font-weight: 500; text-align: left; font-family: inherit; transition: all 0.3s ease; }
+    .faq-item.active { border-color: rgba(34,197,94,0.25); box-shadow: 0 8px 30px rgba(34,197,94,0.05); }
+    .faq-question { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.25rem 1.5rem; background: transparent; border: none; cursor: pointer; color: var(--text); font-size: 1rem; font-weight: 500; text-align: left; font-family: inherit; transition: all 0.3s ease; }
     .faq-question:hover { background: rgba(255,255,255,0.02); }
-    .faq-arrow { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.04); flex-shrink: 0; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-    .faq-item.active .faq-arrow { transform: rotate(180deg); background: rgba(34,197,94,0.15); }
-    .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
-    .faq-answer-inner { padding: 0 1.5rem 1.25rem; color: rgba(248,250,252,0.6); font-size: 0.9rem; line-height: 1.7; }
-    .form-input { width: 100%; padding: 0.875rem 1.25rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; color: #F8FAFC; font-family: inherit; font-size: 0.95rem; transition: all 0.3s ease; outline: none; }
+    .faq-arrow { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.04); flex-shrink: 0; transition: transform 0.4s var(--ease); }
+    .faq-item.active .faq-arrow { transform: rotate(180deg); background: rgba(34,197,94,0.15); color: var(--brand); }
+    .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.5s var(--ease); }
+    .faq-answer-inner { padding: 0 1.5rem 1.25rem; color: var(--text-dim); font-size: 0.9rem; line-height: 1.7; }
+
+    .form-input, .search-input, .search-select {
+      width: 100%; font-family: inherit; font-size: 0.95rem; outline: none;
+      background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+      border-radius: 14px; color: var(--text); transition: all 0.25s ease;
+    }
+    .form-input { padding: 0.875rem 1.25rem; }
     .form-input::placeholder { color: rgba(248,250,252,0.25); }
-    .form-input:focus { border-color: rgba(34,197,94,0.3); background: rgba(255,255,255,0.05); box-shadow: 0 0 0 4px rgba(34,197,94,0.05); }
-    .search-card { background: #111827; border: 1px solid rgba(255,255,255,0.04); border-radius: 24px; padding: 2.5rem; transition: all 0.3s ease; }
-    .search-card:focus-within { border-color: rgba(34,197,94,0.15); box-shadow: 0 0 40px rgba(34,197,94,0.03); }
-    .search-input { width: 100%; padding: 1rem 1.25rem; padding-left: 3rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; color: #F8FAFC; font-family: inherit; font-size: 0.95rem; transition: all 0.3s ease; outline: none; }
+    .form-input:focus { border-color: rgba(34,197,94,0.35); background: rgba(255,255,255,0.05); box-shadow: 0 0 0 4px rgba(34,197,94,0.06); }
+
+    .search-card { background: var(--surface); border: 1px solid rgba(255,255,255,0.05); border-radius: 24px; padding: 2.5rem; transition: all 0.3s ease; position: relative; }
+    .search-card:focus-within { border-color: rgba(34,197,94,0.2); box-shadow: 0 0 50px rgba(34,197,94,0.05); }
+    .search-input { padding: 1rem 1.25rem 1rem 3rem; }
     .search-input::placeholder { color: rgba(248,250,252,0.2); }
-    .search-input:focus { border-color: rgba(34,197,94,0.3); box-shadow: 0 0 0 4px rgba(34,197,94,0.05); }
-    .search-select { width: 100%; padding: 1rem 1.25rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; color: #F8FAFC; font-family: inherit; font-size: 0.95rem; transition: all 0.3s ease; outline: none; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23F8FAFC' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1rem center; }
-    .search-select:focus { border-color: rgba(34,197,94,0.3); box-shadow: 0 0 0 4px rgba(34,197,94,0.05); }
-    .search-select option { background: #111827; color: #F8FAFC; }
-    .game-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 16px; padding: 1rem 1.25rem; cursor: pointer; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-    .game-card:hover { background: rgba(255,255,255,0.04); border-color: rgba(34,197,94,0.2); transform: translateX(4px); box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
-    .btn-primary { display: inline-flex; align-items: center; gap: 0.5rem; background: linear-gradient(135deg, #22C55E, #16a34a); color: white; font-weight: 600; font-family: inherit; padding: 0.875rem 2rem; border-radius: 14px; border: none; cursor: pointer; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); position: relative; overflow: hidden; text-decoration: none; }
-    .btn-primary::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, transparent, rgba(255,255,255,0.1), transparent); transform: translateX(-100%); transition: transform 0.5s ease; }
+    .search-input.input-error { border-color: rgba(239,68,68,0.5); box-shadow: 0 0 0 4px rgba(239,68,68,0.06); }
+    .search-input:focus { border-color: rgba(34,197,94,0.35); box-shadow: 0 0 0 4px rgba(34,197,94,0.06); }
+    .search-select { padding: 1rem 2.5rem 1rem 1.25rem; cursor: pointer; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23F8FAFC' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 1rem center; }
+    .search-select:focus { border-color: rgba(34,197,94,0.35); box-shadow: 0 0 0 4px rgba(34,197,94,0.06); }
+    .search-select option { background: var(--surface); color: var(--text); }
+    .field-error { color: var(--danger); font-size: 0.78rem; margin-top: 0.4rem; min-height: 1em; display: flex; align-items: center; gap: 0.35rem; }
+
+    .game-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 16px; padding: 1rem 1.25rem; cursor: pointer; transition: all 0.3s var(--ease); }
+    .game-card:hover, .game-card:focus-visible { background: rgba(255,255,255,0.045); border-color: rgba(34,197,94,0.25); transform: translateX(4px); box-shadow: 0 4px 20px rgba(0,0,0,0.25); }
+    .game-card:active { transform: translateX(2px) scale(0.995); }
+
+    .skeleton-card { height: 68px; border-radius: 16px; background: linear-gradient(90deg, rgba(255,255,255,0.02) 25%, rgba(255,255,255,0.05) 37%, rgba(255,255,255,0.02) 63%); background-size: 400% 100%; animation: shimmer 1.6s ease-in-out infinite; }
+
+    .btn-primary {
+      display: inline-flex; align-items: center; justify-content:center; gap: 0.5rem;
+      background: linear-gradient(135deg, var(--brand), var(--brand-dark)); color: white;
+      font-weight: 600; font-family: inherit; padding: 0.875rem 2rem; border-radius: 14px;
+      border: none; cursor: pointer; transition: all 0.3s var(--ease); position: relative;
+      overflow: hidden; text-decoration: none;
+    }
+    .btn-primary::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, transparent, rgba(255,255,255,0.12), transparent); transform: translateX(-100%); transition: transform 0.5s ease; }
     .btn-primary:hover::before { transform: translateX(100%); }
-    .btn-primary:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 30px rgba(34,197,94,0.25); }
-    .btn-primary:active { transform: scale(0.97); }
-    .btn-secondary { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.04); color: #F8FAFC; font-weight: 500; font-family: inherit; padding: 0.875rem 2rem; border-radius: 14px; border: 1px solid rgba(255,255,255,0.08); cursor: pointer; text-decoration: none; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+    .btn-primary:hover:not(:disabled) { transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 30px rgba(34,197,94,0.28); }
+    .btn-primary:active:not(:disabled) { transform: scale(0.97); }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .btn-secondary { display: inline-flex; align-items: center; justify-content:center; gap: 0.5rem; background: rgba(255,255,255,0.04); color: var(--text); font-weight: 500; font-family: inherit; padding: 0.875rem 2rem; border-radius: 14px; border: 1px solid rgba(255,255,255,0.08); cursor: pointer; text-decoration: none; transition: all 0.3s var(--ease); }
     .btn-secondary:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.12); transform: translateY(-2px); }
     .btn-secondary:active { transform: scale(0.97); }
-    .support-card { background: #111827; border: 1px solid rgba(255,255,255,0.04); border-radius: 24px; padding: 2.5rem; text-align: center; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-    .support-card:hover { transform: translateY(-8px); border-color: rgba(34,197,94,0.15); box-shadow: 0 20px 60px rgba(34,197,94,0.06); }
-    .support-card .icon-wrap { width: 72px; height: 72px; margin: 0 auto 1.25rem; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 32px; transition: all 0.4s ease; }
-    .support-card:hover .icon-wrap { transform: scale(1.1); }
-    .progress-track { width: 100%; height: 8px; background: rgba(255,255,255,0.04); border-radius: 4px; overflow: hidden; }
-    .progress-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #22C55E, #16a34a); transition: width 1.5s cubic-bezier(0.16, 1, 0.3, 1); }
-    .tech-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 16px; padding: 1.5rem; text-align: center; transition: all 0.3s ease; }
-    .tech-card:hover { background: rgba(255,255,255,0.04); border-color: rgba(34,197,94,0.15); transform: translateY(-4px); }
-    .stat-number { font-size: 3rem; font-weight: 800; background: linear-gradient(135deg, #22C55E, #16a34a); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; }
-    .back-to-top { position: fixed; bottom: 2rem; right: 2rem; z-index: 50; width: 48px; height: 48px; border-radius: 14px; background: #111827; border: 1px solid rgba(255,255,255,0.06); color: #F8FAFC; cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0; transform: translateY(20px); pointer-events: none; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+
+    .stat-number { font-size: 3rem; font-weight: 800; background: linear-gradient(135deg, var(--brand), var(--brand-dark)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; }
+
+    .back-to-top { position: fixed; bottom: 2rem; right: 2rem; z-index: 50; width: 48px; height: 48px; border-radius: 14px; background: var(--surface); border: 1px solid rgba(255,255,255,0.06); color: var(--text); cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0; transform: translateY(20px); pointer-events: none; transition: all 0.4s var(--ease); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
     .back-to-top.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
-    .back-to-top:hover { background: #22C55E; border-color: #22C55E; transform: translateY(-4px); box-shadow: 0 8px 30px rgba(34,197,94,0.2); }
-    .reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+    .back-to-top:hover { background: var(--brand); border-color: var(--brand); transform: translateY(-4px); box-shadow: 0 8px 30px rgba(34,197,94,0.2); }
+
+    .reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s var(--ease); }
     .reveal.visible { opacity: 1; transform: translateY(0); }
-    .reveal-left { opacity: 0; transform: translateX(-40px); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
-    .reveal-left.visible { opacity: 1; transform: translateX(0); }
-    .reveal-right { opacity: 0; transform: translateX(40px); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
-    .reveal-right.visible { opacity: 1; transform: translateX(0); }
-    .reveal-zoom { opacity: 0; transform: scale(0.9); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+    .reveal-zoom { opacity: 0; transform: scale(0.9); transition: all 0.8s var(--ease); }
     .reveal-zoom.visible { opacity: 1; transform: scale(1); }
+
     .particle { position: absolute; pointer-events: none; border-radius: 50%; background: rgba(34,197,94,0.03); }
-    .particle-1 { width: 80px; height: 80px; top: 10%; left: 5%; animation: float-slow 12s ease-in-out infinite; }
-    .particle-2 { width: 50px; height: 50px; top: 60%; right: 8%; animation: float-slow 10s ease-in-out infinite 2s; }
-    .particle-3 { width: 120px; height: 120px; bottom: 10%; left: 20%; animation: float-slow 15s ease-in-out infinite 4s; }
-    .spinner { width: 24px; height: 24px; border: 3px solid rgba(34,197,94,0.2); border-top-color: #22C55E; border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    @media (max-width: 768px) { .stat-number { font-size: 2.5rem; } .search-card { padding: 1.5rem; } .support-card { padding: 2rem; } .feature-card { padding: 1.5rem; } .mockup-board-cell { font-size: 14px; } }
-    @media (max-width: 480px) { .stat-number { font-size: 2rem; } .btn-primary, .btn-secondary { padding: 0.75rem 1.5rem; font-size: 0.9rem; } .support-card { padding: 1.5rem; } }
+    .particle-1 { width: 80px; height: 80px; top: 10%; left: 5%; }
+    .particle-2 { width: 50px; height: 50px; top: 60%; right: 8%; }
+    .particle-3 { width: 120px; height: 120px; bottom: 10%; left: 20%; }
+
+    .spinner { width: 24px; height: 24px; border: 3px solid rgba(34,197,94,0.2); border-top-color: var(--brand); border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
+
+    .toast-container { position: fixed; top: 5.5rem; left: 50%; transform: translateX(-50%); z-index: 300; display: flex; flex-direction: column; gap: 0.6rem; width: min(360px, 90vw); pointer-events: none; }
+    .toast { pointer-events: auto; display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.9rem 1rem; border-radius: 12px; background: rgba(17,24,39,0.95); border: 1px solid var(--border); box-shadow: 0 10px 40px rgba(0,0,0,0.4); animation: toastIn 0.35s var(--ease); font-size: 0.85rem; }
+    .toast.error { border-color: rgba(239,68,68,0.3); }
+    .toast.success { border-color: rgba(34,197,94,0.3); }
+    .toast i { margin-top: 2px; }
+    .toast.error i { color: var(--danger); }
+    .toast.success i { color: var(--brand); }
+
+    .badge-live { display: inline-flex; align-items: center; gap: 0.4rem; }
+    .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--brand); }
+
+    .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text-faint); }
+    .empty-state i { font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.5; display: block; }
+
+    @media (max-width: 768px) {
+      .stat-number { font-size: 2.5rem; }
+      .search-card { padding: 1.5rem; }
+      .feature-card { padding: 1.5rem; }
+      .mockup-board-cell { font-size: 14px; }
+      .toast-container { top: 4.5rem; }
+    }
+    @media (max-width: 480px) {
+      .stat-number { font-size: 2rem; }
+      .btn-primary, .btn-secondary { padding: 0.75rem 1.5rem; font-size: 0.9rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+    }
   </style>
-</head><body>
+</head>
+<body>
+  <div id="scrollProgress"></div>
+  <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
   <!-- Mobile Menu -->
-  <div class="mobile-menu" id="mobileMenu">
+  <div class="menu-backdrop" id="menuBackdrop"></div>
+  <div class="mobile-menu" id="mobileMenu" role="dialog" aria-modal="true" aria-label="Menu navigasi">
     <div class="flex flex-col gap-2">
-      <a href="#" class="mobile-nav-link text-lg font-medium text-[#F8FAFC] no-underline px-4 py-3 rounded-xl hover:bg-[rgba(255,255,255,0.04)] transition-all" style="cursor:pointer"><i class="fas fa-home"></i> Home</a>
-      <a href="/support" class="mobile-nav-link text-lg font-medium text-[rgba(248,250,252,0.6)] no-underline px-4 py-3 rounded-xl hover:bg-[rgba(255,255,255,0.04)] transition-all" style="cursor:pointer"><i class="fas fa-heart"></i> Support</a>
-      <a href="/faq" class="mobile-nav-link text-lg font-medium text-[rgba(248,250,252,0.6)] no-underline px-4 py-3 rounded-xl hover:bg-[rgba(255,255,255,0.04)] transition-all" style="cursor:pointer"><i class="fas fa-question-circle"></i> FAQ</a>
-      <a href="/about" class="mobile-nav-link text-lg font-medium text-[rgba(248,250,252,0.6)] no-underline px-4 py-3 rounded-xl hover:bg-[rgba(255,255,255,0.04)] transition-all" style="cursor:pointer"><i class="fas fa-info-circle"></i> About</a>
+      <a href="#" class="mobile-nav-link text-lg font-medium text-[#F8FAFC] no-underline px-4 py-3 rounded-xl hover:bg-[rgba(255,255,255,0.04)] transition-all" style="cursor:pointer"><i class="fas fa-home w-5"></i> Home</a>
+      <a href="/support" class="mobile-nav-link text-lg font-medium text-[rgba(248,250,252,0.6)] no-underline px-4 py-3 rounded-xl hover:bg-[rgba(255,255,255,0.04)] transition-all" style="cursor:pointer"><i class="fas fa-heart w-5"></i> Support</a>
+      <a href="/faq" class="mobile-nav-link text-lg font-medium text-[rgba(248,250,252,0.6)] no-underline px-4 py-3 rounded-xl hover:bg-[rgba(255,255,255,0.04)] transition-all" style="cursor:pointer"><i class="fas fa-question-circle w-5"></i> FAQ</a>
+      <a href="/about" class="mobile-nav-link text-lg font-medium text-[rgba(248,250,252,0.6)] no-underline px-4 py-3 rounded-xl hover:bg-[rgba(255,255,255,0.04)] transition-all" style="cursor:pointer"><i class="fas fa-info-circle w-5"></i> About</a>
     </div>
     <div class="mt-8">
-      <button onclick="document.querySelector('#searchSection').scrollIntoView({behavior:'smooth', block:'start'})" class="btn-primary w-full justify-center text-base"><i class="fas fa-play"></i> Start Analysis</button>
+      <button type="button" data-scroll-to="#searchSection" class="btn-primary w-full text-base"><i class="fas fa-play"></i> Start Analysis</button>
     </div>
   </div>
-  <button class="back-to-top" id="backToTop" aria-label="Back to top">
+
+  <button class="back-to-top" id="backToTop" aria-label="Kembali ke atas">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
   </button>
+
   <nav class="navbar" id="navbar">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
       <a href="#" class="flex items-center gap-2.5 no-underline group">
-        <span class="text-2xl" style="line-height:1"><i class="fas fa-chess-knight"></i></span>
-        <span class="text-lg font-bold text-[#F8FAFC] tracking-tight">Chess<span class="text-[#22C55E]">Review</span></span>
+        <span class="text-2xl" style="line-height:1;color:var(--brand)"><i class="fas fa-chess-knight"></i></span>
+        <span class="text-lg font-bold text-[#F8FAFC] tracking-tight">Chess<span style="color:var(--brand)">Review</span></span>
       </a>
       <div class="hidden md:flex items-center gap-1">
-        <a href="#" class="nav-link px-3 py-2 text-sm no-underline"><i class="fas fa-home"></i> Home</a>
-        <a href="/support" class="nav-link px-3 py-2 text-sm no-underline"><i class="fas fa-heart"></i> Support</a>
-        <a href="/faq" class="nav-link px-3 py-2 text-sm no-underline"><i class="fas fa-question-circle"></i> FAQ</a>
-        <a href="/about" class="nav-link px-3 py-2 text-sm no-underline"><i class="fas fa-info-circle"></i> About</a>
+        <a href="#" class="nav-link active px-4 py-2 text-sm no-underline"><i class="fas fa-home mr-1.5"></i>Home</a>
+        <a href="/support" class="nav-link px-4 py-2 text-sm no-underline"><i class="fas fa-heart mr-1.5"></i>Support</a>
+        <a href="/faq" class="nav-link px-4 py-2 text-sm no-underline"><i class="fas fa-question-circle mr-1.5"></i>FAQ</a>
+        <a href="/about" class="nav-link px-4 py-2 text-sm no-underline"><i class="fas fa-info-circle mr-1.5"></i>About</a>
       </div>
       <div class="hidden md:flex items-center gap-3">
-        <button onclick="document.querySelector('#searchSection').scrollIntoView({behavior:'smooth', block:'start'})" class="btn-primary text-sm px-5 py-2.5"><i class="fas fa-play"></i> Start Analysis</button>
+        <button type="button" data-scroll-to="#searchSection" class="btn-primary text-sm px-5 py-2.5"><i class="fas fa-play"></i> Start Analysis</button>
       </div>
-      <div class="md:hidden hamburger" id="hamburger" onclick="toggleMobileMenu()"><span></span><span></span><span></span></div>
+      <button class="md:hidden hamburger" id="hamburger" aria-label="Buka menu" aria-expanded="false" aria-controls="mobileMenu"><span></span><span></span><span></span></button>
     </div>
   </nav>
+
   <section class="relative min-h-screen flex items-center overflow-hidden pt-24 pb-16">
     <div class="hero-glow" style="top:-100px;left:-200px;animation:pulse-glow 4s ease-in-out infinite"></div>
     <div class="hero-glow-2" style="bottom:-100px;right:-200px;animation:pulse-glow 5s ease-in-out infinite 1s"></div>
-    <div class="particle particle-1"></div>
-    <div class="particle particle-2"></div>
-    <div class="particle particle-3"></div>
+    <div class="particle particle-1" style="animation:float-slow 12s ease-in-out infinite"></div>
+    <div class="particle particle-2" style="animation:float-slow 10s ease-in-out infinite 2s"></div>
+    <div class="particle particle-3" style="animation:float-slow 15s ease-in-out infinite 4s"></div>
     <div class="absolute inset-0 opacity-[0.015] pointer-events-none" style="background-image:linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);background-size:60px 60px"></div>
+
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full relative z-10">
       <div class="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
         <div class="flex-1 text-center lg:text-left">
-          <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[rgba(34,197,94,0.08)] border border-[rgba(34,197,94,0.12)] text-[#22C55E] text-xs font-semibold tracking-wide mb-6 animate-fade-up">
-            <span class="w-1.5 h-1.5 rounded-full bg-[#22C55E] animate-pulse"></span> Powered by Stockfish 10
+          <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[rgba(34,197,94,0.08)] border border-[rgba(34,197,94,0.12)] text-[color:var(--brand)] text-xs font-semibold tracking-wide mb-6 animate-fade-up badge-live">
+            <span class="badge-dot animate-pulse"></span> Powered by Stockfish 10
           </div>
           <h1 class="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-extrabold leading-[1.1] tracking-tight animate-fade-up">
             Analyze Your<br>
@@ -318,24 +410,25 @@
             Like a Pro
           </h1>
           <p class="text-[rgba(248,250,252,0.5)] text-base sm:text-lg mt-6 max-w-2xl lg:max-w-xl leading-relaxed animate-fade-up" style="animation-delay:0.15s">
-            Website ini menganalisis permainan catur menggunakan <strong class="text-[#22C55E] font-semibold">Stockfish Engine</strong> dan memberikan review lengkap mulai dari Book, Brilliant, Great, Best, Excellent, Good, Inaccuracy, Miss, Mistake hingga Blunder.
+            Website ini menganalisis permainan catur menggunakan <strong class="text-[color:var(--brand)] font-semibold">Stockfish Engine</strong> dan memberikan review lengkap mulai dari Book, Brilliant, Great, Best, Excellent, Good, Inaccuracy, Miss, Mistake hingga Blunder.
           </p>
           <div class="flex flex-col sm:flex-row items-center gap-4 mt-8 animate-fade-up" style="animation-delay:0.3s">
-            <button onclick="document.querySelector('#searchSection').scrollIntoView({behavior:'smooth', block:'start'})" class="btn-primary text-base px-8 py-4 w-full sm:w-auto justify-center"><i class="fas fa-play"></i> Start Analysis</button>
-            <a href="/support" class="btn-secondary text-base px-8 py-4 w-full sm:w-auto justify-center no-underline"><i class="fas fa-heart"></i> Support</a>
+            <button type="button" data-scroll-to="#searchSection" class="btn-primary text-base px-8 py-4 w-full sm:w-auto"><i class="fas fa-play"></i> Start Analysis</button>
+            <a href="/support" class="btn-secondary text-base px-8 py-4 w-full sm:w-auto no-underline"><i class="fas fa-heart"></i> Support</a>
           </div>
           <div class="flex flex-wrap items-center justify-center lg:justify-start gap-6 mt-10 animate-fade-up" style="animation-delay:0.45s">
-            <div class="flex items-center gap-2 text-[rgba(248,250,252,0.3)] text-xs">
-              <svg class="text-[#22C55E]" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Free Forever
+            <div class="flex items-center gap-2 text-[rgba(248,250,252,0.35)] text-xs">
+              <svg style="color:var(--brand)" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Free Forever
             </div>
-            <div class="flex items-center gap-2 text-[rgba(248,250,252,0.3)] text-xs">
-              <svg class="text-[#22C55E]" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> No Account Needed
+            <div class="flex items-center gap-2 text-[rgba(248,250,252,0.35)] text-xs">
+              <svg style="color:var(--brand)" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> No Account Needed
             </div>
-            <div class="flex items-center gap-2 text-[rgba(248,250,252,0.3)] text-xs">
-              <svg class="text-[#22C55E]" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> In-Browser Analysis
+            <div class="flex items-center gap-2 text-[rgba(248,250,252,0.35)] text-xs">
+              <svg style="color:var(--brand)" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> In-Browser Analysis
             </div>
           </div>
         </div>
+
         <div class="flex-1 w-full max-w-xl mx-auto lg:mx-0 mockup-container animate-fade-right" style="animation-delay:0.2s">
           <div class="mockup-frame">
             <div class="mockup-bar">
@@ -372,7 +465,7 @@
             </div>
             <div class="border-t border-[rgba(255,255,255,0.03)] px-4 py-2.5">
               <div class="flex gap-4 text-[11px] leading-relaxed font-medium">
-                <div><div><span style="color:rgba(248,250,252,0.3);min-width:24px;display:inline-block">1.</span><span style="color:#F8FAFC">e4</span> <span style="color:rgba(248,250,252,0.6)">e5</span></div><div><span style="color:rgba(248,250,252,0.3);min-width:24px;display:inline-block">2.</span><span style="color:#F8FAFC">Nf3</span> <span style="color:rgba(248,250,252,0.6)">Nc6</span></div><div><span style="color:rgba(248,250,252,0.3);min-width:24px;display:inline-block">3.</span><span style="color:#F8FAFC">Bb5</span> <span style="color:rgba(248,250,252,0.6)">a6</span></div><div><span style="color:rgba(248,250,252,0.3);min-width:24px;display:inline-block">4.</span><span style="color:#F8FAFC">Ba4</span> <span style="color:#22C55E;font-weight:600">Nf6</span></div></div>
+                <div><div><span style="color:rgba(248,250,252,0.3);min-width:24px;display:inline-block">1.</span><span style="color:#F8FAFC">e4</span> <span style="color:rgba(248,250,252,0.6)">e5</span></div><div><span style="color:rgba(248,250,252,0.3);min-width:24px;display:inline-block">2.</span><span style="color:#F8FAFC">Nf3</span> <span style="color:rgba(248,250,252,0.6)">Nc6</span></div><div><span style="color:rgba(248,250,252,0.3);min-width:24px;display:inline-block">3.</span><span style="color:#F8FAFC">Bb5</span> <span style="color:rgba(248,250,252,0.6)">a6</span></div><div><span style="color:rgba(248,250,252,0.3);min-width:24px;display:inline-block">4.</span><span style="color:#F8FAFC">Ba4</span> <span style="color:var(--brand);font-weight:600">Nf6</span></div></div>
                 <div><div><span style="color:rgba(248,250,252,0.3);min-width:24px;display:inline-block">5.</span><span style="color:#F8FAFC">O-O</span> <span style="color:rgba(248,250,252,0.6)">Be7</span></div><div><span style="color:rgba(248,250,252,0.3);min-width:24px;display:inline-block">6.</span><span style="color:#F8FAFC">Re1</span> <span style="color:rgba(248,250,252,0.6)">b5</span></div><div><span style="color:rgba(248,250,252,0.3);min-width:24px;display:inline-block">7.</span><span style="color:#F8FAFC">Bb3</span> <span style="color:rgba(248,250,252,0.6)">d6</span></div><div><span style="color:rgba(248,250,252,0.3);min-width:24px;display:inline-block">8.</span><span style="color:#F8FAFC">c3</span> <span style="color:rgba(248,250,252,0.6)">O-O</span></div></div>
               </div>
             </div>
@@ -380,10 +473,12 @@
         </div>
       </div>
     </div>
-  </section>  <section id="features" class="relative py-20 sm:py-28">
+  </section>
+
+  <section id="features" class="relative py-20 sm:py-28">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="text-center max-w-3xl mx-auto mb-16 reveal">
-        <span class="inline-block text-xs font-semibold tracking-widest text-[#22C55E] uppercase mb-4">Features</span>
+        <span class="inline-block text-xs font-semibold tracking-widest text-[color:var(--brand)] uppercase mb-4">Features</span>
         <h2 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#F8FAFC] tracking-tight">Everything You Need to<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-[#22C55E] to-[#16a34a]">Improve Your Game</span></h2>
         <p class="text-[rgba(248,250,252,0.4)] text-base sm:text-lg mt-4 leading-relaxed">Analisis mendalam dengan Stockfish Engine &mdash; semua berjalan di browser, 100% gratis.</p>
       </div>
@@ -399,49 +494,63 @@
       </div>
     </div>
   </section>
+
   <section class="cta-section relative py-24 sm:py-32">
     <div class="cta-glow"></div>
     <div class="cta-glow-2"></div>
     <div class="max-w-4xl mx-auto px-4 sm:px-6 text-center relative z-10 reveal-zoom">
       <h2 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#F8FAFC] tracking-tight mb-4">Ready to Improve Your Chess?</h2>
       <p class="text-[rgba(248,250,252,0.4)] text-lg max-w-2xl mx-auto mb-8">Mulai analisis permainan Chess.com kamu sekarang juga. Gratis, cepat, dan akurat.</p>
-      <button onclick="document.querySelector('#searchSection').scrollIntoView({behavior:'smooth', block:'start'})" class="btn-primary text-lg px-10 py-4 sm:px-12 sm:py-5"><i class="fas fa-play"></i> Start Analysis</button>
+      <button type="button" data-scroll-to="#searchSection" class="btn-primary text-lg px-10 py-4 sm:px-12 sm:py-5"><i class="fas fa-play"></i> Start Analysis</button>
     </div>
-  </section>  <section id="searchSection" class="relative py-20 sm:py-28 bg-[rgba(255,255,255,0.01)]">
+  </section>
+
+  <section id="searchSection" class="relative py-20 sm:py-28 bg-[rgba(255,255,255,0.01)]">
     <div class="max-w-4xl mx-auto px-4 sm:px-6">
       <div class="text-center max-w-3xl mx-auto mb-12 reveal">
-        <span class="inline-block text-xs font-semibold tracking-widest text-[#22C55E] uppercase mb-4">Start Analysis</span>
+        <span class="inline-block text-xs font-semibold tracking-widest text-[color:var(--brand)] uppercase mb-4">Start Analysis</span>
         <h2 class="text-3xl sm:text-4xl font-extrabold text-[#F8FAFC] tracking-tight">Analisis Permainan <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#22C55E] to-[#16a34a]">Chess.com</span></h2>
         <p class="text-[rgba(248,250,252,0.4)] text-base mt-3">Masukkan username dan bulan untuk memulai</p>
       </div>
+
       <div class="search-card reveal">
-        <form id="searchForm">
+        <form id="searchForm" novalidate>
           <div class="space-y-5">
             <div>
               <label for="username" class="block text-sm font-medium text-[rgba(248,250,252,0.7)] mb-2">Username Chess.com</label>
               <div class="relative">
-                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-[rgba(248,250,252,0.3)] text-lg"><i class="fas fa-chess-king"></i></span>
-                <input type="text" id="username" placeholder="Contoh: magnuscarlsen" autocomplete="off" autocapitalize="off" class="search-input">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-[rgba(248,250,252,0.3)] text-lg pointer-events-none"><i class="fas fa-chess-king"></i></span>
+                <input type="text" id="username" name="username" placeholder="Contoh: magnuscarlsen" autocomplete="off" autocapitalize="off" spellcheck="false" class="search-input" aria-describedby="usernameError" maxlength="30">
               </div>
+              <p id="usernameError" class="field-error" role="alert"></p>
             </div>
             <div class="flex flex-col sm:flex-row gap-3 sm:gap-4">
-              <div class="flex-1"><label for="month" class="block text-sm font-medium text-[rgba(248,250,252,0.7)] mb-2">Bulan</label><select id="month" class="search-select"></select></div>
-              <div class="flex-1"><label for="year" class="block text-sm font-medium text-[rgba(248,250,252,0.7)] mb-2">Tahun</label><select id="year" class="search-select"></select></div>
-              <div class="flex items-end sm:min-w-[140px]">
-                <button type="submit" id="searchBtn" class="btn-primary w-full justify-center text-base py-4"><i class="fas fa-search"></i> Cari Game</button>
+              <div class="flex-1"><label for="month" class="block text-sm font-medium text-[rgba(248,250,252,0.7)] mb-2">Bulan</label><select id="month" name="month" class="search-select"></select></div>
+              <div class="flex-1"><label for="year" class="block text-sm font-medium text-[rgba(248,250,252,0.7)] mb-2">Tahun</label><select id="year" name="year" class="search-select"></select></div>
+              <div class="flex items-end sm:min-w-[150px]">
+                <button type="submit" id="searchBtn" class="btn-primary w-full text-base py-4">
+                  <span id="searchBtnIcon"><i class="fas fa-search"></i></span>
+                  <span id="searchBtnText">Cari Game</span>
+                </button>
               </div>
             </div>
           </div>
         </form>
       </div>
-      <div id="loading" class="hidden flex flex-col items-center py-16 reveal">
-        <div class="spinner w-10 h-10 mb-4"></div>
-        <p class="text-[rgba(248,250,252,0.5)] text-sm">Mengambil data dari Chess.com...</p>
-        <p class="text-[rgba(248,250,252,0.2)] text-xs mt-1">Mohon tunggu sebentar</p>
+
+      <div id="loading" class="hidden py-10">
+        <div class="space-y-2.5">
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+        </div>
+        <p class="text-[rgba(248,250,252,0.4)] text-sm text-center mt-6">Mengambil data dari Chess.com...</p>
       </div>
-      <div id="error" class="hidden glass-strong rounded-2xl p-5 mb-8 border-l-4 border-[#EF4444] reveal">
-        <p id="errorMsg" class="text-[#EF4444] text-sm"></p>
+
+      <div id="error" class="hidden glass-strong rounded-2xl p-5 mb-8 border-l-4 border-[color:var(--danger)] reveal">
+        <p id="errorMsg" class="text-[color:var(--danger)] text-sm flex items-center gap-2"><i class="fas fa-circle-exclamation"></i><span></span></p>
       </div>
+
       <div id="results" class="hidden space-y-3 pb-10 sm:pb-14 reveal">
         <div class="flex items-center justify-between flex-wrap gap-2 mb-6">
           <h3 class="text-xl sm:text-2xl font-bold text-[#F8FAFC]">Game <span id="usernameDisplay" class="text-transparent bg-clip-text bg-gradient-to-r from-[#22C55E] to-[#16a34a]"></span></h3>
@@ -451,107 +560,345 @@
       </div>
     </div>
   </section>
+
   <section id="faq" class="relative py-20 sm:py-28 bg-[rgba(255,255,255,0.01)]">
     <div class="max-w-3xl mx-auto px-4 sm:px-6">
       <div class="text-center max-w-3xl mx-auto mb-16 reveal">
-        <span class="inline-block text-xs font-semibold tracking-widest text-[#22C55E] uppercase mb-4">FAQ</span>
+        <span class="inline-block text-xs font-semibold tracking-widest text-[color:var(--brand)] uppercase mb-4">FAQ</span>
         <h2 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#F8FAFC] tracking-tight">Frequently Asked <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#22C55E] to-[#16a34a]">Questions</span></h2>
       </div>
       <div class="space-y-3 reveal" id="faqContainer">
-        <div class="faq-item"><button class="faq-question" onclick="toggleFaq(this)"><span>Apakah website ini gratis?</span><span class="faq-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></button><div class="faq-answer"><div class="faq-answer-inner">Ya, 100% gratis selamanya. Tidak ada iklan, tidak ada batasan jumlah analisis, dan tidak memerlukan akun.</div></div></div>
-        <div class="faq-item"><button class="faq-question" onclick="toggleFaq(this)"><span>Bagaimana cara kerja analisisnya?</span><span class="faq-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></button><div class="faq-answer"><div class="faq-answer-inner">Stockfish Engine berjalan langsung di browser kamu melalui Web Worker. Setelah kamu memilih game dari Chess.com, setiap langkah akan dievaluasi dan diklasifikasikan berdasarkan perbandingan dengan langkah terbaik engine.</div></div></div>
-        <div class="faq-item"><button class="faq-question" onclick="toggleFaq(this)"><span>Apakah data game saya disimpan?</span><span class="faq-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></button><div class="faq-answer"><div class="faq-answer-inner">Tidak. Data game diambil langsung dari Chess.com API dan hanya diproses di browser kamu. Kami tidak menyimpan data apapun di server.</div></div></div>
-        <div class="faq-item"><button class="faq-question" onclick="toggleFaq(this)"><span>Menggunakan engine apa?</span><span class="faq-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></button><div class="faq-answer"><div class="faq-answer-inner">Kami menggunakan Stockfish 10 &mdash; salah satu engine catur terkuat di dunia. Dengan analisis MultiPV depth 10 untuk mendapatkan 3 langkah terbaik di setiap posisi.</div></div></div>
-        <div class="faq-item"><button class="faq-question" onclick="toggleFaq(this)"><span>Apakah mendukung HP/smartphone?</span><span class="faq-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></button><div class="faq-answer"><div class="faq-answer-inner">Ya, antarmuka kami responsif dan bekerja sempurna di semua perangkat &mdash; desktop, tablet, dan smartphone.</div></div></div>
-        <div class="faq-item"><button class="faq-question" onclick="toggleFaq(this)"><span>Apakah perlu akun Chess.com?</span><span class="faq-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></button><div class="faq-answer"><div class="faq-answer-inner">Kamu hanya perlu memasukkan username Chess.com untuk mengambil game publik. Tidak perlu login atau memberikan password.</div></div></div>
-        <div class="faq-item"><button class="faq-question" onclick="toggleFaq(this)"><span>Berapa lama proses analisis?</span><span class="faq-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></button><div class="faq-answer"><div class="faq-answer-inner">Tergantung panjang permainan. Rata-rata 5-15 detik untuk game 40 langkah. Analisis berjalan otomatis setelah game dipilih.</div></div></div>
-        <div class="faq-item"><button class="faq-question" onclick="toggleFaq(this)"><span>Apakah bisa digunakan offline?</span><span class="faq-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></button><div class="faq-answer"><div class="faq-answer-inner">Tidak untuk saat ini. Karena game diambil dari Chess.com API, koneksi internet diperlukan. Namun engine berjalan di browser, jadi setelah game dimuat, analisis tetap berjalan.</div></div></div>
+        <div class="faq-item"><button class="faq-question" aria-expanded="false"><span>Apakah website ini gratis?</span><span class="faq-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></button><div class="faq-answer"><div class="faq-answer-inner">Ya, 100% gratis selamanya. Tidak ada iklan, tidak ada batasan jumlah analisis, dan tidak memerlukan akun.</div></div></div>
+        <div class="faq-item"><button class="faq-question" aria-expanded="false"><span>Bagaimana cara kerja analisisnya?</span><span class="faq-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></button><div class="faq-answer"><div class="faq-answer-inner">Stockfish Engine berjalan langsung di browser kamu melalui Web Worker. Setelah kamu memilih game dari Chess.com, setiap langkah akan dievaluasi dan diklasifikasikan berdasarkan perbandingan dengan langkah terbaik engine.</div></div></div>
+        <div class="faq-item"><button class="faq-question" aria-expanded="false"><span>Apakah data game saya disimpan?</span><span class="faq-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></button><div class="faq-answer"><div class="faq-answer-inner">Tidak. Data game diambil langsung dari Chess.com API dan hanya diproses di browser kamu. Kami tidak menyimpan data apapun di server.</div></div></div>
+        <div class="faq-item"><button class="faq-question" aria-expanded="false"><span>Menggunakan engine apa?</span><span class="faq-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></button><div class="faq-answer"><div class="faq-answer-inner">Kami menggunakan Stockfish 10 &mdash; salah satu engine catur terkuat di dunia. Dengan analisis MultiPV depth 10 untuk mendapatkan 3 langkah terbaik di setiap posisi.</div></div></div>
+        <div class="faq-item"><button class="faq-question" aria-expanded="false"><span>Apakah mendukung HP/smartphone?</span><span class="faq-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></button><div class="faq-answer"><div class="faq-answer-inner">Ya, antarmuka kami responsif dan bekerja sempurna di semua perangkat &mdash; desktop, tablet, dan smartphone.</div></div></div>
+        <div class="faq-item"><button class="faq-question" aria-expanded="false"><span>Apakah perlu akun Chess.com?</span><span class="faq-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></button><div class="faq-answer"><div class="faq-answer-inner">Kamu hanya perlu memasukkan username Chess.com untuk mengambil game publik. Tidak perlu login atau memberikan password.</div></div></div>
+        <div class="faq-item"><button class="faq-question" aria-expanded="false"><span>Berapa lama proses analisis?</span><span class="faq-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></button><div class="faq-answer"><div class="faq-answer-inner">Tergantung panjang permainan. Rata-rata 5-15 detik untuk game 40 langkah. Analisis berjalan otomatis setelah game dipilih.</div></div></div>
+        <div class="faq-item"><button class="faq-question" aria-expanded="false"><span>Apakah bisa digunakan offline?</span><span class="faq-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></button><div class="faq-answer"><div class="faq-answer-inner">Tidak untuk saat ini. Karena game diambil dari Chess.com API, koneksi internet diperlukan. Namun engine berjalan di browser, jadi setelah game dimuat, analisis tetap berjalan.</div></div></div>
       </div>
     </div>
   </section>
+
   <footer class="relative border-t border-[rgba(255,255,255,0.04)] py-16 sm:py-20">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12">
-        <div><div class="flex items-center gap-2.5 mb-4"><span class="text-2xl"><i class="fas fa-chess-knight"></i></span><span class="text-lg font-bold text-[#F8FAFC] tracking-tight">Chess<span class="text-[#22C55E]">Review</span></span></div><p class="text-[rgba(248,250,252,0.3)] text-sm leading-relaxed">Analisis permainan catur gratis menggunakan Stockfish Engine. Review lengkap untuk membantu kamu meningkatkan permainan.</p><div class="flex gap-3 mt-5"><a href="#" class="w-10 h-10 rounded-xl bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.04)] flex items-center justify-center text-[rgba(248,250,252,0.4)] hover:text-[#22C55E] hover:border-[rgba(34,197,94,0.2)] transition-all no-underline"><i class="fab fa-github"></i></a><a href="#" class="w-10 h-10 rounded-xl bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.04)] flex items-center justify-center text-[rgba(248,250,252,0.4)] hover:text-[#22C55E] hover:border-[rgba(34,197,94,0.2)] transition-all no-underline"><i class="fab fa-discord"></i></a><a href="#" class="w-10 h-10 rounded-xl bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.04)] flex items-center justify-center text-[rgba(248,250,252,0.4)] hover:text-[#22C55E] hover:border-[rgba(34,197,94,0.2)] transition-all no-underline"><i class="fas fa-envelope"></i></a><a href="#" class="w-10 h-10 rounded-xl bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.04)] flex items-center justify-center text-[rgba(248,250,252,0.4)] hover:text-[#22C55E] hover:border-[rgba(34,197,94,0.2)] transition-all no-underline"><i class="fas fa-music"></i></a></div></div>
-        <div><h4 class="text-sm font-bold text-[#F8FAFC] mb-5">Navigation</h4><ul class="space-y-3"><li><a href="#" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[#22C55E] transition-colors no-underline">Home</a></li><li><a href="#features" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[#22C55E] transition-colors no-underline">Features</a></li><li><a href="/support" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[#22C55E] transition-colors no-underline">Support</a></li><li><a href="/faq" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[#22C55E] transition-colors no-underline">FAQ</a></li><li><a href="/contact" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[#22C55E] transition-colors no-underline">Contact</a></li><li><a href="/about" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[#22C55E] transition-colors no-underline">About</a></li></ul></div>
-        <div><h4 class="text-sm font-bold text-[#F8FAFC] mb-5">Resources</h4><ul class="space-y-3"><li><a href="#" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[#22C55E] transition-colors no-underline">Stockfish Engine</a></li><li><a href="#" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[#22C55E] transition-colors no-underline">Chess.com API</a></li><li><a href="#" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[#22C55E] transition-colors no-underline">Opening Book</a></li><li><a href="#" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[#22C55E] transition-colors no-underline">PGN Reference</a></li><li><a href="#" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[#22C55E] transition-colors no-underline">Changelog</a></li></ul></div>
-        <div><h4 class="text-sm font-bold text-[#F8FAFC] mb-5">Stay Updated</h4><p class="text-[rgba(248,250,252,0.3)] text-sm mb-4">Dapatkan update fitur terbaru dan tips catur.</p><div class="flex gap-2"><input type="email" placeholder="email kamu" class="flex-1 px-4 py-2.5 rounded-xl bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.06)] text-sm text-[#F8FAFC] outline-none focus:border-[rgba(34,197,94,0.3)] transition-all" style="font-family:inherit"><button class="px-4 py-2.5 rounded-xl bg-[#22C55E] text-white text-sm font-semibold hover:bg-[#1da34d] transition-all border-none cursor-pointer" style="font-family:inherit">Subscribe</button></div></div>
+        <div>
+          <div class="flex items-center gap-2.5 mb-4"><span class="text-2xl" style="color:var(--brand)"><i class="fas fa-chess-knight"></i></span><span class="text-lg font-bold text-[#F8FAFC] tracking-tight">Chess<span style="color:var(--brand)">Review</span></span></div>
+          <p class="text-[rgba(248,250,252,0.3)] text-sm leading-relaxed">Analisis permainan catur gratis menggunakan Stockfish Engine. Review lengkap untuk membantu kamu meningkatkan permainan.</p>
+          <div class="flex gap-3 mt-5">
+            <a href="#" class="w-10 h-10 rounded-xl bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.04)] flex items-center justify-center text-[rgba(248,250,252,0.4)] hover:text-[color:var(--brand)] hover:border-[rgba(34,197,94,0.2)] transition-all no-underline"><i class="fab fa-github"></i></a>
+            <a href="#" class="w-10 h-10 rounded-xl bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.04)] flex items-center justify-center text-[rgba(248,250,252,0.4)] hover:text-[color:var(--brand)] hover:border-[rgba(34,197,94,0.2)] transition-all no-underline"><i class="fab fa-discord"></i></a>
+            <a href="mailto:hello@example.com" class="w-10 h-10 rounded-xl bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.04)] flex items-center justify-center text-[rgba(248,250,252,0.4)] hover:text-[color:var(--brand)] hover:border-[rgba(34,197,94,0.2)] transition-all no-underline"><i class="fas fa-envelope"></i></a>
+          </div>
+        </div>
+        <div><h4 class="text-sm font-bold text-[#F8FAFC] mb-5">Navigation</h4><ul class="space-y-3"><li><a href="#" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[color:var(--brand)] transition-colors no-underline">Home</a></li><li><a href="#features" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[color:var(--brand)] transition-colors no-underline">Features</a></li><li><a href="/support" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[color:var(--brand)] transition-colors no-underline">Support</a></li><li><a href="/faq" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[color:var(--brand)] transition-colors no-underline">FAQ</a></li><li><a href="/contact" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[color:var(--brand)] transition-colors no-underline">Contact</a></li><li><a href="/about" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[color:var(--brand)] transition-colors no-underline">About</a></li></ul></div>
+        <div><h4 class="text-sm font-bold text-[#F8FAFC] mb-5">Resources</h4><ul class="space-y-3"><li><a href="#" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[color:var(--brand)] transition-colors no-underline">Stockfish Engine</a></li><li><a href="#" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[color:var(--brand)] transition-colors no-underline">Chess.com API</a></li><li><a href="#" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[color:var(--brand)] transition-colors no-underline">Opening Book</a></li><li><a href="#" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[color:var(--brand)] transition-colors no-underline">PGN Reference</a></li><li><a href="#" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[color:var(--brand)] transition-colors no-underline">Changelog</a></li></ul></div>
+        <div>
+          <h4 class="text-sm font-bold text-[#F8FAFC] mb-5">Stay Updated</h4>
+          <p class="text-[rgba(248,250,252,0.3)] text-sm mb-4">Dapatkan update fitur terbaru dan tips catur.</p>
+          <form id="newsletterForm" class="flex gap-2">
+            <input type="email" id="newsletterEmail" required placeholder="email kamu" class="flex-1 px-4 py-2.5 rounded-xl bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.06)] text-sm text-[#F8FAFC] outline-none focus:border-[rgba(34,197,94,0.3)] transition-all" style="font-family:inherit">
+            <button type="submit" id="newsletterBtn" class="px-4 py-2.5 rounded-xl bg-[color:var(--brand)] text-white text-sm font-semibold hover:bg-[color:var(--brand-dark)] transition-all border-none cursor-pointer" style="font-family:inherit">Subscribe</button>
+          </form>
+        </div>
       </div>
-      <div class="mt-12 pt-8 border-t border-[rgba(255,255,255,0.04)] flex flex-col sm:flex-row items-center justify-between gap-4"><p class="text-[rgba(248,250,252,0.2)] text-xs">Made with <i class="fas fa-heart"></i> &middot; Powered by Stockfish</p><p class="text-[rgba(248,250,252,0.2)] text-xs">&copy; 2024 Chess Review. All rights reserved.</p></div>
+      <div class="mt-12 pt-8 border-t border-[rgba(255,255,255,0.04)] flex flex-col sm:flex-row items-center justify-between gap-4">
+        <p class="text-[rgba(248,250,252,0.2)] text-xs">Made with <i class="fas fa-heart"></i> &middot; Powered by Stockfish</p>
+        <p class="text-[rgba(248,250,252,0.2)] text-xs">&copy; <span id="footerYear"></span> Chess Review. All rights reserved.</p>
+      </div>
     </div>
   </footer>
+
   <script>
+  (function () {
+    'use strict';
+
+    /* ---------- Toast helper ---------- */
+    function showToast(message, type) {
+      var container = document.getElementById('toastContainer');
+      var toast = document.createElement('div');
+      toast.className = 'toast ' + (type || 'success');
+      var icon = type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check';
+      toast.innerHTML = '<i class="fas ' + icon + '"></i><span>' + message + '</span>';
+      container.appendChild(toast);
+      setTimeout(function () {
+        toast.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-8px)';
+        setTimeout(function () { toast.remove(); }, 300);
+      }, 3200);
+    }
+
+    /* ---------- Scroll progress + navbar state + back to top ---------- */
     var navbar = document.getElementById('navbar');
-    window.addEventListener('scroll', function() {
+    var backToTop = document.getElementById('backToTop');
+    var scrollProgress = document.getElementById('scrollProgress');
+    function onScroll() {
       var s = window.pageYOffset;
       if (s > 40) navbar.classList.add('scrolled'); else navbar.classList.remove('scrolled');
-      var btt = document.getElementById('backToTop');
-      if (s > 600) btt.classList.add('visible'); else btt.classList.remove('visible');
-    }, { passive: true });
-    document.getElementById('backToTop').addEventListener('click', function() { window.scrollTo({ top: 0, behavior: 'smooth' }); });
-    function toggleMobileMenu() { document.getElementById('mobileMenu').classList.toggle('open'); document.getElementById('hamburger').classList.toggle('active'); }
-    document.querySelectorAll('.mobile-nav-link').forEach(function(el) { el.addEventListener('click', function() { document.getElementById('mobileMenu').classList.remove('open'); document.getElementById('hamburger').classList.remove('active'); }); });
-    function toggleFaq(btn) {
-      var item = btn.closest('.faq-item');
-      var answer = item.querySelector('.faq-answer');
-      var isActive = item.classList.contains('active');
-      document.querySelectorAll('.faq-item.active').forEach(function(el) { if (el !== item) { el.classList.remove('active'); el.querySelector('.faq-answer').style.maxHeight = '0'; } });
-      if (isActive) { item.classList.remove('active'); answer.style.maxHeight = '0'; }
-      else { item.classList.add('active'); answer.style.maxHeight = answer.scrollHeight + 'px'; }
+      if (s > 600) backToTop.classList.add('visible'); else backToTop.classList.remove('visible');
+      var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      var pct = docHeight > 0 ? (s / docHeight) * 100 : 0;
+      scrollProgress.style.width = pct + '%';
     }
-    function handleContact(e) { e.preventDefault(); var btn = e.target.querySelector('button[type="submit"]'); var orig = btn.innerHTML; btn.innerHTML = '<span class="spinner" style="width:20px;height:20px;border-width:2px"></span> Sending...'; btn.disabled = true; setTimeout(function() { btn.innerHTML = "&#x2714; Sent!"; setTimeout(function() { btn.innerHTML = orig; btn.disabled = false; }, 2000); }, 1000); return false; }
-    (function() {
-      var reveals = document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-zoom');
-      if (reveals.length) { var observer = new IntersectionObserver(function(entries) { entries.forEach(function(entry) { if (entry.isIntersecting) { entry.target.classList.add('visible'); observer.unobserve(entry.target); } }); }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' }); reveals.forEach(function(el) { observer.observe(el); }); }
-      var progressBar = document.getElementById('progressBar');
-      if (progressBar) { var progObserver = new IntersectionObserver(function(entries) { entries.forEach(function(entry) { if (entry.isIntersecting) { progressBar.style.width = '65%'; progObserver.unobserve(entry.target); } }); }, { threshold: 0.5 }); progObserver.observe(progressBar); }
-    })();
-    var MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-    var now = new Date(), curMonth = now.getMonth(), curYear = now.getFullYear();
-    var $month = $('#month');
-    MONTHS.forEach(function(name, i) { var val = String(i + 1).padStart(2, '0'); $month.append('<option value="' + val + '" ' + (i === curMonth ? 'selected' : '') + '>' + name + '</option>'); });
-    var $year = $('#year');
-    for (var y = curYear; y >= 2005; y--) { $year.append('<option value="' + y + '" ' + (y === curYear ? 'selected' : '') + '>' + y + '</option>'); }
-    $('#searchForm').on('submit', async function(e) {
-      e.preventDefault();
-      var username = $('#username').val().trim();
-      if (!username) { alert('Masukkan username Chess.com'); return; }
-      var month = $('#month').val(), year = $('#year').val();
-      $('#loading').removeClass('hidden'); $('#error').addClass('hidden'); $('#results').addClass('hidden'); $('#gameList').empty(); $('#searchBtn').prop('disabled', true);
-      try {
-        var res = await $.getJSON('/api/proxy/games/' + encodeURIComponent(username) + '/' + year + '/' + month);
-        $('#loading').addClass('hidden'); $('#usernameDisplay').text(username);
-        if (!res.games || res.games.length === 0) { $('#gameList').html('<p class="text-[rgba(248,250,252,0.3)] text-center py-8">Tidak ada game ditemukan untuk bulan ini</p>'); }
-        else { var games = res.games.slice().reverse(); games.forEach(function(game) { renderGame(game, username); }); }
-        $('#results').removeClass('hidden');
-      } catch (err) {
-        $('#loading').addClass('hidden');
-        var msg = 'Gagal mengambil data';
-        if (err.responseJSON && err.responseJSON.error) msg = err.responseJSON.error;
-        else if (err.status === 404) msg = 'Username tidak ditemukan';
-        else if (err.status === 0) msg = 'Tidak dapat terhubung ke server. Periksa koneksi internet.';
-        $('#errorMsg').text(msg); $('#error').removeClass('hidden');
-      } finally { $('#searchBtn').prop('disabled', false); }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    backToTop.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+
+    /* ---------- Smooth scroll buttons ---------- */
+    document.querySelectorAll('[data-scroll-to]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var target = document.querySelector(btn.getAttribute('data-scroll-to'));
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
     });
-    function escapeHtml(str) { return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+    /* ---------- Mobile menu ---------- */
+    var mobileMenu = document.getElementById('mobileMenu');
+    var hamburger = document.getElementById('hamburger');
+    var menuBackdrop = document.getElementById('menuBackdrop');
+
+    function openMenu() {
+      mobileMenu.classList.add('open');
+      menuBackdrop.classList.add('open');
+      hamburger.classList.add('active');
+      hamburger.setAttribute('aria-expanded', 'true');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeMenu() {
+      mobileMenu.classList.remove('open');
+      menuBackdrop.classList.remove('open');
+      hamburger.classList.remove('active');
+      hamburger.setAttribute('aria-expanded', 'false');
+      document.body.style.overflow = '';
+    }
+    hamburger.addEventListener('click', function () {
+      mobileMenu.classList.contains('open') ? closeMenu() : openMenu();
+    });
+    menuBackdrop.addEventListener('click', closeMenu);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && mobileMenu.classList.contains('open')) closeMenu();
+    });
+    document.querySelectorAll('.mobile-nav-link').forEach(function (el) {
+      el.addEventListener('click', closeMenu);
+    });
+
+    /* ---------- FAQ accordion ---------- */
+    document.querySelectorAll('.faq-question').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var item = btn.closest('.faq-item');
+        var answer = item.querySelector('.faq-answer');
+        var isActive = item.classList.contains('active');
+        document.querySelectorAll('.faq-item.active').forEach(function (el) {
+          if (el !== item) {
+            el.classList.remove('active');
+            el.querySelector('.faq-answer').style.maxHeight = '0';
+            el.querySelector('.faq-question').setAttribute('aria-expanded', 'false');
+          }
+        });
+        if (isActive) {
+          item.classList.remove('active');
+          answer.style.maxHeight = '0';
+          btn.setAttribute('aria-expanded', 'false');
+        } else {
+          item.classList.add('active');
+          answer.style.maxHeight = answer.scrollHeight + 'px';
+          btn.setAttribute('aria-expanded', 'true');
+        }
+      });
+    });
+    // Recalculate open FAQ height on resize (fixes stale max-height bug)
+    window.addEventListener('resize', function () {
+      var openItem = document.querySelector('.faq-item.active .faq-answer');
+      if (openItem) openItem.style.maxHeight = openItem.scrollHeight + 'px';
+    });
+
+    /* ---------- Reveal-on-scroll ---------- */
+    var reveals = document.querySelectorAll('.reveal, .reveal-zoom');
+    if (reveals.length && 'IntersectionObserver' in window) {
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+      reveals.forEach(function (el) { observer.observe(el); });
+    } else {
+      reveals.forEach(function (el) { el.classList.add('visible'); });
+    }
+
+    /* ---------- Footer year ---------- */
+    document.getElementById('footerYear').textContent = new Date().getFullYear();
+
+    /* ---------- Newsletter (demo only, no backend) ---------- */
+    var newsletterForm = document.getElementById('newsletterForm');
+    if (newsletterForm) {
+      newsletterForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var email = document.getElementById('newsletterEmail').value.trim();
+        var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailPattern.test(email)) {
+          showToast('Masukkan alamat email yang valid', 'error');
+          return;
+        }
+        var btn = document.getElementById('newsletterBtn');
+        var orig = btn.textContent;
+        btn.textContent = '...';
+        btn.disabled = true;
+        setTimeout(function () {
+          btn.textContent = 'Subscribed!';
+          showToast('Terima kasih sudah subscribe!', 'success');
+          document.getElementById('newsletterEmail').value = '';
+          setTimeout(function () { btn.textContent = orig; btn.disabled = false; }, 2000);
+        }, 700);
+      });
+    }
+
+    /* ---------- Chess.com search ---------- */
+    var MONTHS = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    var now = new Date();
+    var curMonth = now.getMonth();
+    var curYear = now.getFullYear();
+
+    var $month = $('#month');
+    MONTHS.forEach(function (name, i) {
+      var val = String(i + 1).padStart(2, '0');
+      $month.append('<option value="' + val + '" ' + (i === curMonth ? 'selected' : '') + '>' + name + '</option>');
+    });
+
+    var $year = $('#year');
+    for (var y = curYear; y >= 2005; y--) {
+      $year.append('<option value="' + y + '" ' + (y === curYear ? 'selected' : '') + '>' + y + '</option>');
+    }
+
+    var USERNAME_PATTERN = /^[a-zA-Z0-9_-]{2,25}$/;
+    var $username = $('#username');
+    var $usernameError = $('#usernameError');
+
+    function setFieldError(msg) {
+      $usernameError.text(msg || '');
+      $username.toggleClass('input-error', !!msg);
+    }
+    $username.on('input', function () { setFieldError(''); });
+
+    function escapeHtml(str) {
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
     function renderGame(game, username) {
-      var white = game.white ? game.white.username || '?' : '?';
-      var black = game.black ? game.black.username || '?' : '?';
-      var result = (game.white ? game.white.result : null) || (game.black ? game.black.result : null) || '*';
+      var white = (game.white && game.white.username) || '?';
+      var black = (game.black && game.black.username) || '?';
+      var result = (game.white && game.white.result) || (game.black && game.black.result) || '*';
       var date = game.end_time ? new Date(game.end_time * 1000).toLocaleDateString('id-ID') : (game.end_date || '-');
-      var timeClass = game.time_class === 'blitz' ? '<i class="fas fa-bolt"></i>' : game.time_class === 'rapid' ? '<i class="fas fa-stopwatch"></i>' : (game.time_class === 'bullet' ? '<i class="fas fa-rocket"></i>' : '<i class="fas fa-trophy"></i>');
+      var iconMap = { blitz: 'fa-bolt', rapid: 'fa-stopwatch', bullet: 'fa-rocket', daily: 'fa-calendar-day' };
+      var timeIcon = iconMap[game.time_class] || 'fa-trophy';
       var isUserWhite = white.toLowerCase() === username.toLowerCase();
-      var userResult = isUserWhite ? (game.white ? game.white.result : null) : (game.black ? game.black.result : null);
-      var resultColor = userResult === 'win' ? 'text-[#22C55E]' : (userResult && userResult !== 'win' ? 'text-[#EF4444]' : 'text-[#F59E0B]');
+      var userResult = isUserWhite ? (game.white && game.white.result) : (game.black && game.black.result);
+      var resultColor = userResult === 'win' ? 'text-[color:var(--brand)]' : (userResult && userResult !== 'win' ? 'text-[color:var(--danger)]' : 'text-[color:var(--warn)]');
       var opponent = isUserWhite ? black : white;
       var pgn = game.pgn || '';
-      if (!pgn) return;
+      if (!pgn) return false;
+
       var card = document.createElement('div');
       card.className = 'game-card';
-      card.innerHTML = '<div class="flex items-center justify-between gap-2"><div class="flex items-center gap-3 sm:gap-4 min-w-0"><span class="text-xl flex-shrink-0">' + timeClass + '</span><div class="min-w-0"><p class="text-[#F8FAFC] font-semibold text-sm sm:text-base truncate">' + (isUserWhite ? '<span class="text-[#22C55E]">&#x25CF;</span> ' : '') + escapeHtml(white) + ' <span class="text-[rgba(248,250,252,0.3)] mx-1">vs</span> ' + escapeHtml(black) + (!isUserWhite ? ' <span class="text-[#22C55E]">&#x25CF;</span>' : '') + '</p><p class="text-xs sm:text-sm text-[rgba(248,250,252,0.4)] truncate">' + date + ' &mdash; ' + escapeHtml(game.time_class || '-') + ' (' + (game.rated ? 'Rated' : 'Casual') + ')</p></div></div><div class="text-right flex-shrink-0"><p class="text-base sm:text-lg font-bold ' + resultColor + '">' + escapeHtml(result) + '</p><p class="text-xs text-[rgba(248,250,252,0.3)] truncate max-w-[100px]">vs ' + escapeHtml(opponent) + '</p></div></div>';
-      card.addEventListener('click', function() { window.location.href = '/game?pgn=' + encodeURIComponent(pgn); });
+      card.setAttribute('tabindex', '0');
+      card.setAttribute('role', 'button');
+      card.setAttribute('aria-label', 'Analisa game ' + white + ' vs ' + black);
+      card.innerHTML =
+        '<div class="flex items-center justify-between gap-2">' +
+          '<div class="flex items-center gap-3 sm:gap-4 min-w-0">' +
+            '<span class="text-xl flex-shrink-0" style="color:var(--brand)"><i class="fas ' + timeIcon + '"></i></span>' +
+            '<div class="min-w-0">' +
+              '<p class="text-[#F8FAFC] font-semibold text-sm sm:text-base truncate">' +
+                (isUserWhite ? '<span style="color:var(--brand)">&#x25CF;</span> ' : '') +
+                escapeHtml(white) + ' <span class="text-[rgba(248,250,252,0.3)] mx-1">vs</span> ' + escapeHtml(black) +
+                (!isUserWhite ? ' <span style="color:var(--brand)">&#x25CF;</span>' : '') +
+              '</p>' +
+              '<p class="text-xs sm:text-sm text-[rgba(248,250,252,0.4)] truncate">' + date + ' &mdash; ' + escapeHtml(game.time_class || '-') + ' (' + (game.rated ? 'Rated' : 'Casual') + ')</p>' +
+            '</div>' +
+          '</div>' +
+          '<div class="text-right flex-shrink-0">' +
+            '<p class="text-base sm:text-lg font-bold ' + resultColor + '">' + escapeHtml(result) + '</p>' +
+            '<p class="text-xs text-[rgba(248,250,252,0.3)] truncate max-w-[100px]">vs ' + escapeHtml(opponent) + '</p>' +
+          '</div>' +
+        '</div>';
+
+      function goToGame() { window.location.href = '/game?pgn=' + encodeURIComponent(pgn); }
+      card.addEventListener('click', goToGame);
+      card.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goToGame(); }
+      });
       document.getElementById('gameList').appendChild(card);
+      return true;
     }
+
+    function renderEmptyState(message) {
+      $('#gameList').html(
+        '<div class="empty-state"><i class="fas fa-chess-board"></i><p>' + escapeHtml(message) + '</p></div>'
+      );
+    }
+
+    function setSearchLoading(isLoading) {
+      var $btn = $('#searchBtn');
+      $btn.prop('disabled', isLoading);
+      $('#searchBtnIcon').html(isLoading ? '<span class="spinner" style="width:16px;height:16px;border-width:2px"></span>' : '<i class="fas fa-search"></i>');
+      $('#searchBtnText').text(isLoading ? 'Mencari...' : 'Cari Game');
+    }
+
+    $('#searchForm').on('submit', async function (e) {
+      e.preventDefault();
+
+      var username = $username.val().trim();
+      if (!username) { setFieldError('Username tidak boleh kosong'); $username.trigger('focus'); return; }
+      if (!USERNAME_PATTERN.test(username)) { setFieldError('Username hanya boleh huruf, angka, garis bawah, dan strip'); $username.trigger('focus'); return; }
+      setFieldError('');
+
+      var month = $('#month').val();
+      var year = $('#year').val();
+
+      $('#loading').removeClass('hidden');
+      $('#error').addClass('hidden');
+      $('#results').addClass('hidden');
+      $('#gameList').empty();
+      setSearchLoading(true);
+
+      try {
+        var res = await $.getJSON('/api/proxy/games/' + encodeURIComponent(username) + '/' + year + '/' + month);
+        $('#loading').addClass('hidden');
+        $('#usernameDisplay').text(username);
+
+        if (!res.games || res.games.length === 0) {
+          renderEmptyState('Tidak ada game ditemukan untuk bulan ini');
+        } else {
+          var games = res.games.slice().reverse();
+          var rendered = 0;
+          games.forEach(function (game) {
+            if (renderGame(game, username)) rendered++;
+          });
+          if (rendered === 0) {
+            renderEmptyState('Game ditemukan, tapi tidak ada data PGN yang bisa dianalisis');
+          }
+        }
+        $('#results').removeClass('hidden');
+        document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch (err) {
+        $('#loading').addClass('hidden');
+        var msg = 'Gagal mengambil data. Silakan coba lagi.';
+        if (err && err.responseJSON && err.responseJSON.error) msg = err.responseJSON.error;
+        else if (err && err.status === 404) msg = 'Username tidak ditemukan di Chess.com';
+        else if (err && err.status === 0) msg = 'Tidak dapat terhubung ke server. Periksa koneksi internet kamu.';
+        $('#errorMsg span').text(msg);
+        $('#error').removeClass('hidden');
+        showToast(msg, 'error');
+      } finally {
+        setSearchLoading(false);
+      }
+    });
+
+  })();
   </script>
 </body>
 </html>
