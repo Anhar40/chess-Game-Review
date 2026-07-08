@@ -62,8 +62,7 @@
     }
     #analysisOverlay.show { opacity: 1; visibility: visible; }
     #adRow { margin-bottom: 20px; width: 100%; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; }
-    #container-58377c017129b108965cda8fb76fc4c2 { display: flex; gap: 4px; }
-    #container-58377c017129b108965cda8fb76fc4c2 > * { flex: 0 0 auto; }
+    #container-58377c017129b108965cda8fb76fc4c2 > * { display: inline-block; vertical-align: top; }
 
     #bottomActionBar {
       position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
@@ -1247,13 +1246,27 @@
       return { from: uci.slice(0, 2), to: uci.slice(2, 4) };
     }
 
+    function forceAdLayout() {
+      var c = document.getElementById('container-58377c017129b108965cda8fb76fc4c2');
+      if (!c) return;
+      c.style.cssText = 'display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;gap:4px;overflow-x:auto;';
+      Array.from(c.children).forEach(function(ch) {
+        ch.style.cssText += ';flex:0 0 auto!important;';
+      });
+    }
     function showOverlay() {
       $('#analysisOverlay').addClass('show');
+      forceAdLayout();
       if (!$('#popunder-58377').length) {
         var s = document.createElement('script');
         s.id = 'popunder-58377';
         s.src = 'https://crazylatchdisturbance.com/e6/b4/87/e6b487b487c9a79242a047615a9760f7.js';
         document.body.appendChild(s);
+      }
+      if (!window._adObserver) {
+        window._adObserver = new MutationObserver(forceAdLayout);
+        var c = document.getElementById('container-58377c017129b108965cda8fb76fc4c2');
+        if (c) window._adObserver.observe(c, { childList: true, subtree: true });
       }
     }
     function hideOverlay() {
