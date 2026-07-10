@@ -3,8 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#0B1220">
-  <title>Chess Game Review - Analisis Catur Premium dengan Stockfish</title>
+  <meta name="theme-color" content="#22C55E">
+  <meta name="application-name" content="Chess Review">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Chess Review">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="msapplication-TileColor" content="#0B1220">
+  <meta name="msapplication-TileImage" content="/images/icon-144.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/icons/icon.svg">
+  <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon.svg">
+  <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon.svg">
+  <link rel="apple-touch-icon" sizes="512x512" href="/icons/icon.svg">
+  <title>Chess Review - Analisis Permainan Catur dengan Stockfish</title>
   <meta name="description" content="Analisis permainan catur gratis menggunakan Stockfish Engine. Review lengkap: Book, Brilliant, Best, Excellent, Good, Inaccuracy, Mistake, Blunder.">
   <meta name="keywords" content="chess, catur, analisis catur, stockfish, chess.com, review game, analisa catur, opening book, blunder detection">
   <meta property="og:title" content="Chess Game Review - Analisis Catur Premium dengan Stockfish">
@@ -20,6 +32,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Lexend:wght@600;700;800&display=swap" rel="stylesheet">
   <script src="/cdn/tailwind"></script>
   <script src="/cdn/jquery.min.js"></script>
+  <script src="/cdn/chess.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
   <style>
     :root{
@@ -65,7 +78,6 @@
     button { -webkit-tap-highlight-color: transparent; }
     :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 4px; }
 
-    /* Top scroll progress bar */
     #scrollProgress {
       position: fixed; top: 0; left: 0; height: 3px; width: 0%;
       background: linear-gradient(90deg, var(--brand), var(--accent));
@@ -137,185 +149,46 @@
     }
     .mobile-menu.open { right: 0; }
 
-    .hero-glow {
-      position: absolute; width: 600px; height: 600px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(34,197,94,0.08) 0%, transparent 70%);
-      pointer-events: none;
+    .bottomBar {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(11,18,32,0.92);
+      backdrop-filter: blur(20px) saturate(1.4);
+      -webkit-backdrop-filter: blur(20px) saturate(1.4);
+      border-top: 1px solid rgba(255,255,255,0.04);
+      padding: 0.5rem 1rem;
+      display: none; align-items: center; justify-content: space-between;
+      box-shadow: 0 -4px 30px rgba(0,0,0,0.3);
+      gap: 0.5rem;
     }
-    .hero-glow-2 {
-      position: absolute; width: 400px; height: 400px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(59,130,246,0.06) 0%, transparent 60%);
-      pointer-events: none;
+    .bottomBar-nav { display: flex; align-items: center; gap: 0.25rem; }
+    .bottomBar-nav a {
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+      padding: 0.35rem 0.7rem; border-radius: 10px; text-decoration: none;
+      color: var(--text-dim); font-size: 0.65rem; font-weight: 500;
+      transition: all 0.2s ease;
     }
-    @keyframes float { 0%,100% { transform: translateY(0px) rotate(0deg); } 33% { transform: translateY(-12px) rotate(1deg); } 66% { transform: translateY(-6px) rotate(-1deg); } }
-    @keyframes float-slow { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-20px); } }
-    @keyframes pulse-glow { 0%,100% { opacity: 0.4; transform: scale(1); } 50% { opacity: 0.8; transform: scale(1.05); } }
-    @keyframes shimmer { 0% { background-position: -200% center; } 100% { background-position: 200% center; } }
-    @keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes fadeLeft { from { opacity: 0; transform: translateX(-40px); } to { opacity: 1; transform: translateX(0); } }
-    @keyframes fadeRight { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
-    @keyframes zoomIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-    @keyframes borderGlow { 0%,100% { border-color: rgba(34,197,94,0.2); } 50% { border-color: rgba(34,197,94,0.5); } }
+    .bottomBar-nav a i { font-size: 1.05rem; }
+    .bottomBar-nav a:hover, .bottomBar-nav a.active { color: var(--brand); background: rgba(34,197,94,0.08); }
+
+    @media (max-width: 767px) {
+      .bottomBar { display: flex; justify-content: center; }
+      .bottomBar-nav { gap: 0.75rem; }
+    }
+
     @keyframes spin { to { transform: rotate(360deg); } }
-    @keyframes skeletonPulse { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes toastIn { from { opacity: 0; transform: translateY(-12px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
-    @keyframes ripple { to { transform: scale(3); opacity: 0; } }
+    @keyframes shimmer { 0% { background-position: -200% center; } 100% { background-position: 200% center; } }
+    @keyframes skeletonPulse { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
 
-    .animate-float { animation: float 6s ease-in-out infinite; }
-    .animate-pulse-glow { animation: pulse-glow 3s ease-in-out infinite; }
-    .animate-fade-up { animation: fadeUp 0.8s var(--ease) forwards; }
-    .animate-fade-left { animation: fadeLeft 0.8s var(--ease) forwards; }
-    .animate-fade-right { animation: fadeRight 0.8s var(--ease) forwards; }
-    .animate-zoom-in { animation: zoomIn 0.6s var(--ease) forwards; }
+    .animate-fade-up { animation: fadeUp 0.6s var(--ease) forwards; }
 
-    .mockup-container { position: relative; perspective: 1000px; }
-    .mockup-frame {
-      background: var(--surface);
-      border-radius: 16px;
-      border: 1px solid var(--border);
-      box-shadow: 0 20px 80px rgba(0,0,0,0.5), 0 0 40px rgba(34,197,94,0.03);
-      overflow: hidden;
-      transform: rotateY(-2deg) rotateX(2deg);
-      transition: transform 0.6s var(--ease);
-      will-change: transform;
-    }
-    .mockup-frame:hover { transform: rotateY(0deg) rotateX(0deg) translateY(-4px); }
-    .mockup-bar {
-      height: 32px; display: flex; align-items: center; gap: 8px;
-      padding: 0 16px;
-      background: rgba(255,255,255,0.02);
-      border-bottom: 1px solid rgba(255,255,255,0.04);
-    }
-    .mockup-dot { width: 8px; height: 8px; border-radius: 50%; }
-    .mockup-board-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 22px; user-select: none; }
-    .mockup-board-cell.light { background: #E8EDF0; }
-    .mockup-board-cell.dark { background: #4A7C5B; }
-    .mockup-board-cell img { width: 70%; height: 70%; object-fit: contain; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3)); }
-    .mockup-eval-bar { width: 24px; border-radius: 4px; overflow: hidden; background: #1e1e2a; display: flex; flex-direction: column; }
-    .mockup-eval-fill { background: linear-gradient(to top, var(--brand), var(--brand-dark)); transition: height 1s ease; flex: 0 0 auto; }
-    .mockup-eval-top { flex: 1; background: #1e1e2a; }
-
-    .glass {
-      background: rgba(17,24,39,0.6);
-      backdrop-filter: blur(20px) saturate(1.3);
-      -webkit-backdrop-filter: blur(20px) saturate(1.3);
-      border: 1px solid var(--border);
-    }
     .glass-strong {
       background: rgba(17,24,39,0.85);
       backdrop-filter: blur(30px) saturate(1.5);
       -webkit-backdrop-filter: blur(30px) saturate(1.5);
       border: 1px solid var(--border);
     }
-
-    .feature-card {
-      background: var(--surface);
-      border: 1px solid rgba(255,255,255,0.04);
-      border-radius: 20px;
-      padding: 1.75rem;
-      transition: all 0.4s var(--ease);
-      position: relative;
-      overflow: hidden;
-    }
-    .feature-card::before {
-      content: '';
-      position: absolute; top: 0; left: 0; right: 0; height: 2px;
-      background: linear-gradient(90deg, transparent, var(--brand), transparent);
-      opacity: 0;
-      transition: opacity 0.4s ease;
-    }
-    .feature-card:hover { transform: translateY(-8px); border-color: rgba(34,197,94,0.2); box-shadow: 0 20px 60px rgba(34,197,94,0.06); }
-    .feature-card:hover::before { opacity: 1; }
-    .feature-icon {
-      width: 48px; height: 48px; border-radius: 14px;
-      display: flex; align-items: center; justify-content: center;
-      background: rgba(34,197,94,0.1);
-      color: var(--brand);
-      font-size: 22px;
-      transition: all 0.4s ease;
-    }
-    .feature-card:hover .feature-icon { background: rgba(34,197,94,0.2); transform: scale(1.05) rotate(-4deg); }
-
-    .device-frame { border: 2px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; background: var(--surface); box-shadow: 0 20px 60px rgba(0,0,0,0.4); transition: transform 0.4s ease; }
-    .device-frame:hover { transform: translateY(-6px); }
-
-    .cta-section { position: relative; overflow: hidden; }
-    .cta-section::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 30% 50%, rgba(34,197,94,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 50%, rgba(59,130,246,0.08) 0%, transparent 60%); }
-    .cta-glow { position: absolute; width: 300px; height: 300px; border-radius: 50%; background: radial-gradient(circle, rgba(34,197,94,0.15) 0%, transparent 70%); top: -100px; right: -100px; animation: pulse-glow 4s ease-in-out infinite; }
-    .cta-glow-2 { position: absolute; width: 200px; height: 200px; border-radius: 50%; background: radial-gradient(circle, rgba(59,130,246,0.1) 0%, transparent 70%); bottom: -80px; left: -80px; animation: pulse-glow 5s ease-in-out infinite 1s; }
-
-    .faq-item { background: var(--surface); border: 1px solid rgba(255,255,255,0.04); border-radius: 16px; overflow: hidden; transition: border-color 0.3s ease; }
-    .faq-item:hover { border-color: rgba(255,255,255,0.08); }
-    .faq-item.active { border-color: rgba(34,197,94,0.25); box-shadow: 0 8px 30px rgba(34,197,94,0.05); }
-    .faq-question { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.25rem 1.5rem; background: transparent; border: none; cursor: pointer; color: var(--text); font-size: 1rem; font-weight: 500; text-align: left; font-family: inherit; transition: all 0.3s ease; }
-    .faq-question:hover { background: rgba(255,255,255,0.02); }
-    .faq-arrow { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.04); flex-shrink: 0; transition: transform 0.4s var(--ease); }
-    .faq-item.active .faq-arrow { transform: rotate(180deg); background: rgba(34,197,94,0.15); color: var(--brand); }
-    .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.5s var(--ease); }
-    .faq-answer-inner { padding: 0 1.5rem 1.25rem; color: var(--text-dim); font-size: 0.9rem; line-height: 1.7; }
-
-    .form-input, .search-input, .search-select {
-      width: 100%; font-family: inherit; font-size: 0.95rem; outline: none;
-      background: rgba(255,255,255,0.03); border: 1px solid var(--border);
-      border-radius: 14px; color: var(--text); transition: all 0.25s ease;
-    }
-    .form-input { padding: 0.875rem 1.25rem; }
-    .form-input::placeholder { color: rgba(248,250,252,0.25); }
-    .form-input:focus { border-color: rgba(34,197,94,0.35); background: rgba(255,255,255,0.05); box-shadow: 0 0 0 4px rgba(34,197,94,0.06); }
-
-    .search-card { background: var(--surface); border: 1px solid rgba(255,255,255,0.05); border-radius: 24px; padding: 2.5rem; transition: all 0.3s ease; position: relative; }
-    .search-card:focus-within { border-color: rgba(34,197,94,0.2); box-shadow: 0 0 50px rgba(34,197,94,0.05); }
-    .search-input { padding: 1rem 1.25rem 1rem 3rem; }
-    .search-input::placeholder { color: rgba(248,250,252,0.2); }
-    .search-input.input-error { border-color: rgba(239,68,68,0.5); box-shadow: 0 0 0 4px rgba(239,68,68,0.06); }
-    .search-input:focus { border-color: rgba(34,197,94,0.35); box-shadow: 0 0 0 4px rgba(34,197,94,0.06); }
-    .search-select { padding: 1rem 2.5rem 1rem 1.25rem; cursor: pointer; appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23F8FAFC' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-      background-repeat: no-repeat; background-position: right 1rem center; }
-    .search-select:focus { border-color: rgba(34,197,94,0.35); box-shadow: 0 0 0 4px rgba(34,197,94,0.06); }
-    .search-select option { background: var(--surface); color: var(--text); }
-    .field-error { color: var(--danger); font-size: 0.78rem; margin-top: 0.4rem; min-height: 1em; display: flex; align-items: center; gap: 0.35rem; }
-
-    .game-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 16px; padding: 1rem 1.25rem; cursor: pointer; transition: all 0.3s var(--ease); }
-    .game-card:hover, .game-card:focus-visible { background: rgba(255,255,255,0.045); border-color: rgba(34,197,94,0.25); transform: translateX(4px); box-shadow: 0 4px 20px rgba(0,0,0,0.25); }
-    .game-card:active { transform: translateX(2px) scale(0.995); }
-
-    .skeleton-card { height: 68px; border-radius: 16px; background: linear-gradient(90deg, rgba(255,255,255,0.02) 25%, rgba(255,255,255,0.05) 37%, rgba(255,255,255,0.02) 63%); background-size: 400% 100%; animation: shimmer 1.6s ease-in-out infinite; }
-
-    .btn-primary {
-      display: inline-flex; align-items: center; justify-content:center; gap: 0.5rem;
-      background: linear-gradient(135deg, var(--brand), var(--brand-dark)); color: white;
-      font-weight: 600; font-family: inherit; padding: 0.875rem 2rem; border-radius: 14px;
-      border: none; cursor: pointer; transition: all 0.3s var(--ease); position: relative;
-      overflow: hidden; text-decoration: none;
-    }
-    .btn-primary::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, transparent, rgba(255,255,255,0.12), transparent); transform: translateX(-100%); transition: transform 0.5s ease; }
-    .btn-primary:hover::before { transform: translateX(100%); }
-    .btn-primary:hover:not(:disabled) { transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 30px rgba(34,197,94,0.28); }
-    .btn-primary:active:not(:disabled) { transform: scale(0.97); }
-    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
-
-    .btn-secondary { display: inline-flex; align-items: center; justify-content:center; gap: 0.5rem; background: rgba(255,255,255,0.04); color: var(--text); font-weight: 500; font-family: inherit; padding: 0.875rem 2rem; border-radius: 14px; border: 1px solid rgba(255,255,255,0.08); cursor: pointer; text-decoration: none; transition: all 0.3s var(--ease); }
-    .btn-secondary:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.12); transform: translateY(-2px); }
-    .btn-secondary:active { transform: scale(0.97); }
-
-    .stat-number { font-size: 3rem; font-weight: 800; background: linear-gradient(135deg, var(--brand), var(--brand-dark)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; }
-
-    .back-to-top { position: fixed; bottom: 2rem; right: 2rem; z-index: 50; width: 48px; height: 48px; border-radius: 14px; background: var(--surface); border: 1px solid rgba(255,255,255,0.06); color: var(--text); cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0; transform: translateY(20px); pointer-events: none; transition: all 0.4s var(--ease); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
-    .back-to-top.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
-    .back-to-top:hover { background: var(--brand); border-color: var(--brand); transform: translateY(-4px); box-shadow: 0 8px 30px rgba(34,197,94,0.2); }
-
-    .reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s var(--ease); }
-    .reveal.visible { opacity: 1; transform: translateY(0); }
-    .reveal-zoom { opacity: 0; transform: scale(0.9); transition: all 0.8s var(--ease); }
-    .reveal-zoom.visible { opacity: 1; transform: scale(1); }
-
-    .particle { position: absolute; pointer-events: none; border-radius: 50%; background: rgba(34,197,94,0.03); }
-    .particle-1 { width: 80px; height: 80px; top: 10%; left: 5%; }
-    .particle-2 { width: 50px; height: 50px; top: 60%; right: 8%; }
-    .particle-3 { width: 120px; height: 120px; bottom: 10%; left: 20%; }
 
     .spinner { width: 24px; height: 24px; border: 3px solid rgba(34,197,94,0.2); border-top-color: var(--brand); border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
 
@@ -327,22 +200,112 @@
     .toast.error i { color: var(--danger); }
     .toast.success i { color: var(--brand); }
 
-    .badge-live { display: inline-flex; align-items: center; gap: 0.4rem; }
-    .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--brand); }
-
-    .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text-faint); }
-    .empty-state i { font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.5; display: block; }
-
-    @media (max-width: 768px) {
-      .stat-number { font-size: 2.5rem; }
-      .search-card { padding: 1.5rem; }
-      .feature-card { padding: 1.5rem; }
-      .mockup-board-cell { font-size: 14px; }
-      .toast-container { top: 4.5rem; }
+    .card-main {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.25);
+      width: 100%;
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 2.5rem 2rem;
     }
-    @media (max-width: 480px) {
-      .stat-number { font-size: 2rem; }
-      .btn-primary, .btn-secondary { padding: 0.75rem 1.5rem; font-size: 0.9rem; }
+
+    .tab-btn {
+      flex: 1; padding: 0.75rem 1rem; text-align: center; font-weight: 600; font-size: 0.95rem; font-family: inherit;
+      border-radius: 12px; cursor: pointer; transition: all 0.25s var(--ease); border: none; background: transparent; color: var(--text-dim);
+    }
+    .tab-btn:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+    .tab-btn.active { color: var(--text); background: rgba(34,197,94,0.12); box-shadow: inset 0 0 0 1px rgba(34,197,94,0.2); }
+    .tab-content { display: none; animation: fadeUp 0.35s var(--ease); }
+    .tab-content.active { display: block; }
+
+    .form-input, .form-select {
+      width: 100%; font-family: inherit; font-size: 0.95rem; outline: none;
+      background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+      border-radius: 12px; color: var(--text); transition: all 0.25s ease; padding: 0.8rem 1rem;
+    }
+    .form-input::placeholder { color: rgba(248,250,252,0.25); }
+    .form-input:focus, .form-select:focus { border-color: rgba(34,197,94,0.35); background: rgba(255,255,255,0.05); box-shadow: 0 0 0 4px rgba(34,197,94,0.06); }
+    .form-select { appearance: none; cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23F8FAFC' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 1rem center; padding-right: 2.5rem;
+    }
+    .form-select option { background: var(--surface); color: var(--text); }
+    .field-error { color: var(--danger); font-size: 0.78rem; margin-top: 0.3rem; min-height: 1em; display: flex; align-items: center; gap: 0.35rem; }
+
+    .btn-primary {
+      display: inline-flex; align-items: center; justify-content:center; gap: 0.5rem;
+      background: linear-gradient(135deg, var(--brand), var(--brand-dark)); color: white;
+      font-weight: 600; font-family: inherit; padding: 0.8rem 1.8rem; border-radius: 12px;
+      border: none; cursor: pointer; transition: all 0.25s var(--ease); position: relative;
+      overflow: hidden; text-decoration: none;
+    }
+    .btn-primary::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, transparent, rgba(255,255,255,0.12), transparent); transform: translateX(-100%); transition: transform 0.5s ease; }
+    .btn-primary:hover::before { transform: translateX(100%); }
+    .btn-primary:hover:not(:disabled) { transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 30px rgba(34,197,94,0.28); }
+    .btn-primary:active:not(:disabled) { transform: scale(0.97); }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .btn-secondary {
+      display: inline-flex; align-items: center; justify-content:center; gap: 0.5rem;
+      background: rgba(255,255,255,0.04); color: var(--text); font-weight: 500; font-family: inherit;
+      padding: 0.8rem 1.8rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); cursor: pointer;
+      text-decoration: none; transition: all 0.25s var(--ease);
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.12); transform: translateY(-2px); }
+    .btn-secondary:active { transform: scale(0.97); }
+
+    .game-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 14px; padding: 0.9rem 1.1rem; cursor: pointer; transition: all 0.25s var(--ease); }
+    .game-card:hover, .game-card:focus-visible { background: rgba(255,255,255,0.045); border-color: rgba(34,197,94,0.25); transform: translateX(4px); box-shadow: 0 4px 20px rgba(0,0,0,0.25); }
+    .game-card:active { transform: translateX(2px) scale(0.995); }
+
+    .skeleton-card { height: 62px; border-radius: 14px; background: linear-gradient(90deg, rgba(255,255,255,0.02) 25%, rgba(255,255,255,0.05) 37%, rgba(255,255,255,0.02) 63%); background-size: 400% 100%; animation: shimmer 1.6s ease-in-out infinite; }
+
+    .history-dropdown {
+      position: absolute; top: 100%; left: 0; right: 0; z-index: 50; margin-top: 4px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.4); overflow: hidden; max-height: 280px; overflow-y: auto;
+    }
+    .history-item {
+      display: flex; align-items: center; gap: 0.7rem; padding: 0.65rem 1rem; cursor: pointer;
+      transition: background 0.15s ease; font-size: 0.9rem;
+    }
+    .history-item:hover { background: rgba(255,255,255,0.04); }
+    .history-item i { color: var(--text-faint); font-size: 0.85rem; width: 16px; }
+    .history-clear { display: block; width: 100%; padding: 0.5rem 1rem; text-align: center; font-size: 0.78rem; color: var(--text-faint); background: transparent; border: none; border-top: 1px solid var(--border); cursor: pointer; transition: color 0.15s; font-family: inherit; }
+    .history-clear:hover { color: var(--danger); }
+
+    .progress-step { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0; font-size: 0.9rem; color: var(--text-dim); transition: all 0.3s ease; }
+    .progress-step .step-icon { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; transition: all 0.3s ease; border: 2px solid var(--border); color: transparent; }
+    .progress-step.active { color: var(--text); }
+    .progress-step.active .step-icon { border-color: var(--warn); color: var(--warn); }
+    .progress-step.done { color: var(--text-dim); }
+    .progress-step.done .step-icon { border-color: var(--brand); background: var(--brand); color: white; }
+
+    .drop-zone {
+      border: 2px dashed var(--border); border-radius: 14px; padding: 2.5rem 1.5rem; text-align: center;
+      cursor: pointer; transition: all 0.25s var(--ease); background: rgba(255,255,255,0.01);
+    }
+    .drop-zone:hover, .drop-zone.drag-over { border-color: rgba(34,197,94,0.35); background: rgba(34,197,94,0.03); }
+    .drop-zone i { font-size: 2rem; color: var(--text-faint); margin-bottom: 0.5rem; display: block; }
+    .drop-zone p { color: var(--text-dim); font-size: 0.9rem; }
+    .drop-zone .hint { color: var(--text-faint); font-size: 0.78rem; margin-top: 0.3rem; }
+
+    .empty-state { text-align: center; padding: 2.5rem 1rem; color: var(--text-faint); }
+    .empty-state i { font-size: 2.5rem; margin-bottom: 0.8rem; opacity: 0.4; display: block; }
+    .empty-state p { font-size: 0.95rem; }
+
+    .back-to-top { position: fixed; bottom: 2rem; right: 2rem; z-index: 50; width: 48px; height: 48px; border-radius: 14px; background: var(--surface); border: 1px solid rgba(255,255,255,0.06); color: var(--text); cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0; transform: translateY(20px); pointer-events: none; transition: all 0.4s var(--ease); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+    .back-to-top.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+    .back-to-top:hover { background: var(--brand); border-color: var(--brand); transform: translateY(-4px); box-shadow: 0 8px 30px rgba(34,197,94,0.2); }
+
+    .game-count { font-size: 0.8rem; color: var(--text-faint); text-align: right; margin-top: 0.5rem; }
+
+    @media (max-width: 640px) {
+      .card-main { padding: 1.5rem 1.2rem; border-radius: 16px; }
+      .btn-primary, .btn-secondary { width: 100%; }
+      .drop-zone { padding: 1.8rem 1rem; }
     }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
@@ -353,7 +316,6 @@
   <div id="scrollProgress"></div>
   <div class="toast-container" id="toastContainer" aria-live="polite"></div>
 
-  <!-- Mobile Menu -->
   <div class="menu-backdrop" id="menuBackdrop"></div>
   <div class="mobile-menu" id="mobileMenu" role="dialog" aria-modal="true" aria-label="Menu navigasi">
     <div class="flex flex-col gap-2">
@@ -362,14 +324,19 @@
       <a href="/faq" class="mobile-nav-link text-lg font-medium text-[rgba(248,250,252,0.6)] no-underline px-4 py-3 rounded-xl hover:bg-[rgba(255,255,255,0.04)] transition-all" style="cursor:pointer"><i class="fas fa-question-circle w-5"></i> FAQ</a>
       <a href="/about" class="mobile-nav-link text-lg font-medium text-[rgba(248,250,252,0.6)] no-underline px-4 py-3 rounded-xl hover:bg-[rgba(255,255,255,0.04)] transition-all" style="cursor:pointer"><i class="fas fa-info-circle w-5"></i> About</a>
     </div>
-    <div class="mt-8">
-      <button type="button" data-scroll-to="#searchSection" class="btn-primary w-full text-base"><i class="fas fa-play"></i> Start Analysis</button>
-    </div>
   </div>
+
+
 
   <button class="back-to-top" id="backToTop" aria-label="Kembali ke atas">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
   </button>
+
+  <div id="splashScreen" style="position:fixed;inset:0;z-index:99999;background:#0B1220;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease">
+    <div style="font-size:4rem;color:#22C55E;margin-bottom:1rem"><i class="fas fa-chess-knight"></i></div>
+    <div style="font-family:'Lexend',sans-serif;font-size:1.3rem;font-weight:800;color:#F8FAFC;margin-bottom:0.5rem">Chess Review</div>
+    <div style="width:32px;height:32px;border:3px solid rgba(34,197,94,0.2);border-top-color:#22C55E;border-radius:50%;animation:spin 0.8s linear infinite;margin-top:1rem"></div>
+  </div>
 
   <nav class="navbar" id="navbar">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
@@ -383,238 +350,142 @@
         <a href="/faq" class="nav-link px-4 py-2 text-sm no-underline"><i class="fas fa-question-circle mr-1.5"></i>FAQ</a>
         <a href="/about" class="nav-link px-4 py-2 text-sm no-underline"><i class="fas fa-info-circle mr-1.5"></i>About</a>
       </div>
-      <div class="hidden md:flex items-center gap-3">
-        <button type="button" data-scroll-to="#searchSection" class="btn-primary text-sm px-5 py-2.5"><i class="fas fa-play"></i> Start Analysis</button>
+      <div class="flex items-center gap-2">
+        <span id="onlineIndicator" class="text-xs flex items-center gap-1 px-2 py-1 rounded-full" style="display:none">
+          <span class="w-1.5 h-1.5 rounded-full"></span>
+        </span>
+        <button id="installBtn" class="hidden text-xs px-3 py-1.5 rounded-lg bg-[rgba(34,197,94,0.12)] border border-[rgba(34,197,94,0.2)] text-[color:var(--brand)] hover:bg-[rgba(34,197,94,0.2)] transition-all cursor-pointer font-semibold" style="font-family:inherit">
+          <i class="fas fa-download mr-1"></i> Install
+        </button>
+        <a href="#mainCard" class="hidden md:inline-flex btn-primary text-sm px-5 py-2.5 no-underline"><i class="fas fa-play"></i> Mulai Analisis</a>
+        <button class="md:hidden hamburger" id="hamburger" aria-label="Buka menu" aria-expanded="false" aria-controls="mobileMenu"><span></span><span></span><span></span></button>
       </div>
-      <button class="md:hidden hamburger" id="hamburger" aria-label="Buka menu" aria-expanded="false" aria-controls="mobileMenu"><span></span><span></span><span></span></button>
     </div>
   </nav>
 
-  <section class="relative min-h-screen flex items-center overflow-hidden pt-24 pb-16">
-    <div class="hero-glow" style="top:-100px;left:-200px;animation:pulse-glow 4s ease-in-out infinite"></div>
-    <div class="hero-glow-2" style="bottom:-100px;right:-200px;animation:pulse-glow 5s ease-in-out infinite 1s"></div>
-    <div class="particle particle-1" style="animation:float-slow 12s ease-in-out infinite"></div>
-    <div class="particle particle-2" style="animation:float-slow 10s ease-in-out infinite 2s"></div>
-    <div class="particle particle-3" style="animation:float-slow 15s ease-in-out infinite 4s"></div>
-    <div class="absolute inset-0 opacity-[0.015] pointer-events-none" style="background-image:linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);background-size:60px 60px"></div>
-
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full relative z-10">
-      <div class="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
-        <div class="flex-1 text-center lg:text-left">
-          <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[rgba(34,197,94,0.08)] border border-[rgba(34,197,94,0.12)] text-[color:var(--brand)] text-xs font-semibold tracking-wide mb-6 animate-fade-up badge-live">
-            <span class="badge-dot animate-pulse"></span> Powered by Stockfish 10
-          </div>
-          <h1 class="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-extrabold leading-[1.1] tracking-tight animate-fade-up">
-            Analyze Your<br>
-            <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#22C55E] via-[#2dd46b] to-[#16a34a]">Chess Games</span><br>
-            Like a Pro
-          </h1>
-          <p class="text-[rgba(248,250,252,0.5)] text-base sm:text-lg mt-6 max-w-2xl lg:max-w-xl leading-relaxed animate-fade-up" style="animation-delay:0.15s">
-            Website ini menganalisis permainan catur menggunakan <strong class="text-[color:var(--brand)] font-semibold">Stockfish Engine</strong> dan memberikan review lengkap mulai dari Book, Brilliant, Great, Best, Excellent, Good, Inaccuracy, Miss, Mistake hingga Blunder.
-          </p>
-          <div class="flex flex-col sm:flex-row items-center gap-4 mt-8 animate-fade-up" style="animation-delay:0.3s">
-            <button type="button" data-scroll-to="#searchSection" class="btn-primary text-base px-8 py-4 w-full sm:w-auto"><i class="fas fa-play"></i> Start Analysis</button>
-            <a href="/support" class="btn-secondary text-base px-8 py-4 w-full sm:w-auto no-underline"><i class="fas fa-heart"></i> Support</a>
-          </div>
-          <div class="flex flex-wrap items-center justify-center lg:justify-start gap-6 mt-10 animate-fade-up" style="animation-delay:0.45s">
-            <div class="flex items-center gap-2 text-[rgba(248,250,252,0.35)] text-xs">
-              <svg style="color:var(--brand)" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Free Forever
-            </div>
-            <div class="flex items-center gap-2 text-[rgba(248,250,252,0.35)] text-xs">
-              <svg style="color:var(--brand)" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> No Account Needed
-            </div>
-            <div class="flex items-center gap-2 text-[rgba(248,250,252,0.35)] text-xs">
-              <svg style="color:var(--brand)" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> In-Browser Analysis
-            </div>
-          </div>
-        </div>
-
-        <div class="flex-1 w-full max-w-xl mx-auto lg:mx-0 mockup-container animate-fade-right" style="animation-delay:0.2s">
-          <div class="mockup-frame">
-            <div class="mockup-bar">
-              <div class="mockup-dot" style="background:#EF4444"></div>
-              <div class="mockup-dot" style="background:#F59E0B"></div>
-              <div class="mockup-dot" style="background:#22C55E"></div>
-              <div class="flex-1 flex justify-center"><span class="text-[rgba(248,250,252,0.15)] text-xs font-medium">Chess Review &mdash; Analysis</span></div>
-            </div>
-            <div class="flex items-center justify-between px-4 py-2.5 border-b border-[rgba(255,255,255,0.03)]">
-              <div class="flex items-center gap-2.5">
-                <div class="w-7 h-7 rounded-full bg-gradient-to-br from-[#22C55E] to-[#16a34a] flex items-center justify-center text-white text-xs font-bold">W</div>
-                <span class="text-xs font-semibold text-[#F8FAFC]">MagnusCarlsen</span>
-                <span class="text-[10px] text-[rgba(248,250,252,0.3)]">2832</span>
-              </div>
-              <span class="text-xs text-[rgba(248,250,252,0.3)] font-medium">vs</span>
-              <div class="flex items-center gap-2.5">
-                <span class="text-xs font-semibold text-[rgba(248,250,252,0.7)]">Hikaru</span>
-                <span class="text-[10px] text-[rgba(248,250,252,0.3)]">2768</span>
-                <div class="w-7 h-7 rounded-full bg-gradient-to-br from-[#1e1e2a] to-[#2a2a3a] flex items-center justify-center text-white text-xs font-bold">B</div>
-              </div>
-            </div>
-            <div class="flex gap-3 p-3">
-              <div class="flex-1 aspect-square grid grid-cols-8 rounded-lg overflow-hidden border border-[rgba(255,255,255,0.04)]">
-                <div class="mockup-board-cell light"><img src="/images/bR.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell dark"><img src="/images/bN.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell light"><img src="/images/bB.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell dark"><img src="/images/bQ.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell light"><img src="/images/bK.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell dark"><img src="/images/bB.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell light"><img src="/images/bN.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell dark"><img src="/images/bR.png" alt="" style="opacity:0.5"></div>
-                <div class="mockup-board-cell dark"><img src="/images/bP.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell light"><img src="/images/bP.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell dark"><img src="/images/bP.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell light"><img src="/images/bP.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell dark"><img src="/images/bP.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell light"><img src="/images/bP.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell dark"><img src="/images/bP.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell light"><img src="/images/bP.png" alt="" style="opacity:0.5"></div>
-                <div class="mockup-board-cell light"></div><div class="mockup-board-cell dark"></div><div class="mockup-board-cell light"></div><div class="mockup-board-cell dark"></div><div class="mockup-board-cell light"></div><div class="mockup-board-cell dark"></div><div class="mockup-board-cell light"></div><div class="mockup-board-cell dark"></div>
-                <div class="mockup-board-cell dark"></div><div class="mockup-board-cell light"></div><div class="mockup-board-cell dark"></div><div class="mockup-board-cell light"></div><div class="mockup-board-cell dark"></div><div class="mockup-board-cell light"></div><div class="mockup-board-cell dark"></div><div class="mockup-board-cell light"></div>
-                <div class="mockup-board-cell light"></div><div class="mockup-board-cell dark"></div><div class="mockup-board-cell light"></div><div class="mockup-board-cell dark"></div><div class="mockup-board-cell light"></div><div class="mockup-board-cell dark"></div><div class="mockup-board-cell light"></div><div class="mockup-board-cell dark"></div>
-                <div class="mockup-board-cell dark"></div><div class="mockup-board-cell light"></div><div class="mockup-board-cell dark"></div><div class="mockup-board-cell light"></div><div class="mockup-board-cell dark"></div><div class="mockup-board-cell light"></div><div class="mockup-board-cell dark"></div><div class="mockup-board-cell light"></div>
-                <div class="mockup-board-cell light"><img src="/images/wP.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell dark"><img src="/images/wP.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell light"><img src="/images/wP.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell dark"><img src="/images/wP.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell light"><img src="/images/wP.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell dark"><img src="/images/wP.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell light"><img src="/images/wP.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell dark"><img src="/images/wP.png" alt="" style="opacity:0.5"></div>
-                <div class="mockup-board-cell dark"><img src="/images/wR.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell light"><img src="/images/wN.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell dark"><img src="/images/wB.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell light"><img src="/images/wQ.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell dark"><img src="/images/wK.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell light"><img src="/images/wB.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell dark"><img src="/images/wN.png" alt="" style="opacity:0.5"></div><div class="mockup-board-cell light"><img src="/images/wR.png" alt="" style="opacity:0.5"></div>
-              </div>
-              <div class="mockup-eval-bar flex-shrink-0" style="height:140px"><div class="mockup-eval-fill" style="height:55%"></div><div class="mockup-eval-top"></div></div>
-            </div>
-            <div class="border-t border-[rgba(255,255,255,0.03)] px-4 py-2.5">
-              <div class="flex gap-4 text-[11px] leading-relaxed font-medium">
-                <div><div><span style="color:rgba(248,250,252,0.3);min-width:24px;display:inline-block">1.</span><span style="color:#F8FAFC">e4</span> <span style="color:rgba(248,250,252,0.6)">e5</span></div><div><span style="color:rgba(248,250,252,0.3);min-width:24px;display:inline-block">2.</span><span style="color:#F8FAFC">Nf3</span> <span style="color:rgba(248,250,252,0.6)">Nc6</span></div><div><span style="color:rgba(248,250,252,0.3);min-width:24px;display:inline-block">3.</span><span style="color:#F8FAFC">Bb5</span> <span style="color:rgba(248,250,252,0.6)">a6</span></div><div><span style="color:rgba(248,250,252,0.3);min-width:24px;display:inline-block">4.</span><span style="color:#F8FAFC">Ba4</span> <span style="color:var(--brand);font-weight:600">Nf6</span></div></div>
-                <div><div><span style="color:rgba(248,250,252,0.3);min-width:24px;display:inline-block">5.</span><span style="color:#F8FAFC">O-O</span> <span style="color:rgba(248,250,252,0.6)">Be7</span></div><div><span style="color:rgba(248,250,252,0.3);min-width:24px;display:inline-block">6.</span><span style="color:#F8FAFC">Re1</span> <span style="color:rgba(248,250,252,0.6)">b5</span></div><div><span style="color:rgba(248,250,252,0.3);min-width:24px;display:inline-block">7.</span><span style="color:#F8FAFC">Bb3</span> <span style="color:rgba(248,250,252,0.6)">d6</span></div><div><span style="color:rgba(248,250,252,0.3);min-width:24px;display:inline-block">8.</span><span style="color:#F8FAFC">c3</span> <span style="color:rgba(248,250,252,0.6)">O-O</span></div></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+  <div class="bottomBar" id="bottomBar">
+    <div class="bottomBar-nav">
+      <a href="#"><i class="fas fa-home"></i><span>Home</span></a>
+      <a href="/support"><i class="fas fa-heart"></i><span>Dukung</span></a>
+      <a href="/faq"><i class="fas fa-question-circle"></i><span>FAQ</span></a>
+      <a href="/about"><i class="fas fa-info-circle"></i><span>Tentang</span></a>
     </div>
-  </section>
+  </div>
 
-  <section id="features" class="relative py-20 sm:py-28">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="text-center max-w-3xl mx-auto mb-16 reveal">
-        <span class="inline-block text-xs font-semibold tracking-widest text-[color:var(--brand)] uppercase mb-4">Features</span>
-        <h2 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#F8FAFC] tracking-tight">Everything You Need to<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-[#22C55E] to-[#16a34a]">Improve Your Game</span></h2>
-        <p class="text-[rgba(248,250,252,0.4)] text-base sm:text-lg mt-4 leading-relaxed">Analisis mendalam dengan Stockfish Engine &mdash; semua berjalan di browser, 100% gratis.</p>
-      </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-        <div class="feature-card reveal"><div class="feature-icon mb-4"><i class="fas fa-chess-knight"></i></div><h3 class="text-lg font-bold text-[#F8FAFC] mb-2">Game Review</h3><p class="text-[rgba(248,250,252,0.4)] text-sm leading-relaxed">Review setiap langkah dengan klasifikasi akurat: Brilliant, Best, Excellent, Good, Inaccuracy, Mistake, Blunder.</p></div>
-        <div class="feature-card reveal" style="transition-delay:0.05s"><div class="feature-icon mb-4"><i class="fas fa-chart-bar"></i></div><h3 class="text-lg font-bold text-[#F8FAFC] mb-2">Accuracy Analysis</h3><p class="text-[rgba(248,250,252,0.4)] text-sm leading-relaxed">Persentase akurasi per pemain berdasarkan perbandingan dengan langkah terbaik Stockfish.</p></div>
-        <div class="feature-card reveal" style="transition-delay:0.1s"><div class="feature-icon mb-4"><i class="fas fa-gem"></i></div><h3 class="text-lg font-bold text-[#F8FAFC] mb-2">Brilliant Detection</h3><p class="text-[rgba(248,250,252,0.4)] text-sm leading-relaxed">Deteksi otomatis langkah Brilliant &mdash; pengorbanan taktis dengan evaluasi yang akurat.</p></div>
-        <div class="feature-card reveal" style="transition-delay:0.15s"><div class="feature-icon mb-4"><i class="fas fa-book"></i></div><h3 class="text-lg font-bold text-[#F8FAFC] mb-2">Opening Detection</h3><p class="text-[rgba(248,250,252,0.4)] text-sm leading-relaxed">Kenali nama opening, variasi, dan kode ECO secara otomatis dari setiap permainan.</p></div>
-        <div class="feature-card reveal" style="transition-delay:0.2s"><div class="feature-icon mb-4"><i class="fas fa-chart-line"></i></div><h3 class="text-lg font-bold text-[#F8FAFC] mb-2">Evaluation Graph</h3><p class="text-[rgba(248,250,252,0.4)] text-sm leading-relaxed">Grafik evaluasi centipawn interaktif dengan winning chances di setiap posisi.</p></div>
-        <div class="feature-card reveal" style="transition-delay:0.25s"><div class="feature-icon mb-4"><i class="fas fa-bolt"></i></div><h3 class="text-lg font-bold text-[#F8FAFC] mb-2">Fast Analysis</h3><p class="text-[rgba(248,250,252,0.4)] text-sm leading-relaxed">Analisis MultiPV depth 10 yang cepat &mdash; temukan top 3 langkah terbaik di setiap posisi.</p></div>
-        <div class="feature-card reveal" style="transition-delay:0.3s"><div class="feature-icon mb-4"><i class="fas fa-brain"></i></div><h3 class="text-lg font-bold text-[#F8FAFC] mb-2">Stockfish Engine</h3><p class="text-[rgba(248,250,252,0.4)] text-sm leading-relaxed">Stockfish 10 berjalan langsung di browser via WebAssembly &mdash; tanpa server backend.</p></div>
-        <div class="feature-card reveal" style="transition-delay:0.35s"><div class="feature-icon mb-4"><i class="fas fa-mobile-alt"></i></div><h3 class="text-lg font-bold text-[#F8FAFC] mb-2">Fully Responsive</h3><p class="text-[rgba(248,250,252,0.4)] text-sm leading-relaxed">Antarmuka responsif yang sempurna di desktop, tablet, dan smartphone.</p></div>
-      </div>
-    </div>
-  </section>
-
-  <section class="cta-section relative py-24 sm:py-32">
-    <div class="cta-glow"></div>
-    <div class="cta-glow-2"></div>
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 text-center relative z-10 reveal-zoom">
-      <h2 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#F8FAFC] tracking-tight mb-4">Ready to Improve Your Chess?</h2>
-      <p class="text-[rgba(248,250,252,0.4)] text-lg max-w-2xl mx-auto mb-8">Mulai analisis permainan Chess.com kamu sekarang juga. Gratis, cepat, dan akurat.</p>
-      <button type="button" data-scroll-to="#searchSection" class="btn-primary text-lg px-10 py-4 sm:px-12 sm:py-5"><i class="fas fa-play"></i> Start Analysis</button>
-    </div>
-  </section>
-
-  <section id="searchSection" class="relative py-20 sm:py-28 bg-[rgba(255,255,255,0.01)]">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6">
-      <div class="text-center max-w-3xl mx-auto mb-12 reveal">
-        <span class="inline-block text-xs font-semibold tracking-widest text-[color:var(--brand)] uppercase mb-4">Start Analysis</span>
-        <h2 class="text-3xl sm:text-4xl font-extrabold text-[#F8FAFC] tracking-tight">Analisis Permainan <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#22C55E] to-[#16a34a]">Chess.com</span></h2>
-        <p class="text-[rgba(248,250,252,0.4)] text-base mt-3">Masukkan username dan bulan untuk memulai</p>
+  <main class="min-h-screen flex items-center justify-center px-4 pb-6 pt-24 sm:pt-28 md:pb-6" id="mainContent">
+    <div class="card-main" id="mainCard">
+      <div class="text-center mb-8">
+        <div class="text-4xl mb-3" style="color:var(--brand)"><i class="fas fa-chess-knight"></i></div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-[#F8FAFC] tracking-tight">Analisis Permainan Catur</h1>
+        <p class="text-[rgba(248,250,252,0.45)] text-sm sm:text-base mt-3 max-w-lg mx-auto leading-relaxed">
+          Analisis permainan catur dari Chess.com atau gunakan file PGN sendiri untuk mendapatkan review langkah demi langkah.
+        </p>
       </div>
 
-      <div class="search-card reveal">
+      <div id="emptyState" class="empty-state">
+        <i class="fas fa-chess-board"></i>
+        <p>Belum ada permainan.</p>
+        <p class="text-xs mt-1" style="color:var(--text-faint)">Silakan masukkan username Chess.com atau import file PGN.</p>
+      </div>
+
+      <div class="flex gap-2 mb-6 bg-[rgba(255,255,255,0.02)] p-1 rounded-xl" role="tablist">
+        <button class="tab-btn active" data-tab="Chesscom" role="tab" aria-selected="true" id="tabChesscom"><i class="fas fa-chess-king mr-2"></i>Chess.com</button>
+        <button class="tab-btn" data-tab="Import" role="tab" aria-selected="false" id="tabImport"><i class="fas fa-file-import mr-2"></i>Import PGN</button>
+      </div>
+
+      <div class="tab-content active" id="tabChesscomContent" role="tabpanel">
         <form id="searchForm" novalidate>
-          <div class="space-y-5">
+          <div class="space-y-4">
             <div>
-              <label for="username" class="block text-sm font-medium text-[rgba(248,250,252,0.7)] mb-2">Username Chess.com</label>
-              <div class="relative">
-                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-[rgba(248,250,252,0.3)] text-lg pointer-events-none"><i class="fas fa-chess-king"></i></span>
-                <input type="text" id="username" name="username" placeholder="Contoh: magnuscarlsen" autocomplete="off" autocapitalize="off" spellcheck="false" class="search-input" aria-describedby="usernameError" maxlength="30">
+              <div class="relative" id="usernameWrapper">
+                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-[rgba(248,250,252,0.25)] pointer-events-none"><i class="fas fa-user"></i></span>
+                <input type="text" id="username" name="username" placeholder="Username Chess.com" autocomplete="off" autocapitalize="off" spellcheck="false" class="form-input" style="padding-left:2.5rem" maxlength="30">
+                <div class="history-dropdown hidden" id="historyDropdown"></div>
               </div>
               <p id="usernameError" class="field-error" role="alert"></p>
             </div>
-            <div class="flex flex-col sm:flex-row gap-3 sm:gap-4">
-              <div class="flex-1"><label for="month" class="block text-sm font-medium text-[rgba(248,250,252,0.7)] mb-2">Bulan</label><select id="month" name="month" class="search-select"></select></div>
-              <div class="flex-1"><label for="year" class="block text-sm font-medium text-[rgba(248,250,252,0.7)] mb-2">Tahun</label><select id="year" name="year" class="search-select"></select></div>
-              <div class="flex items-end sm:min-w-[150px]">
-                <button type="submit" id="searchBtn" class="btn-primary w-full text-base py-4">
+            <div class="flex flex-col sm:flex-row gap-3">
+              <div class="flex-1">
+                <select id="month" name="month" class="form-select"></select>
+              </div>
+              <div class="flex-1">
+                <select id="year" name="year" class="form-select"></select>
+              </div>
+              <div class="sm:min-w-[140px]">
+                <button type="submit" id="searchBtn" class="btn-primary w-full text-sm py-3">
                   <span id="searchBtnIcon"><i class="fas fa-search"></i></span>
-                  <span id="searchBtnText">Cari Game</span>
+                  <span id="searchBtnText">Ambil Permainan</span>
                 </button>
               </div>
             </div>
           </div>
         </form>
-      </div>
 
-      <div id="loading" class="hidden py-10">
-        <div class="space-y-2.5">
-          <div class="skeleton-card"></div>
-          <div class="skeleton-card"></div>
-          <div class="skeleton-card"></div>
+        <div id="loadingSteps" class="hidden mt-6 p-4 rounded-xl bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.04)]">
+          <div class="progress-step" data-step="1"><span class="step-icon"></span><span>Menghubungi Chess.com</span></div>
+          <div class="progress-step" data-step="2"><span class="step-icon"></span><span>Mengambil arsip bulan</span></div>
+          <div class="progress-step" data-step="3"><span class="step-icon"></span><span>Memuat daftar permainan</span></div>
         </div>
-        <p class="text-[rgba(248,250,252,0.4)] text-sm text-center mt-6">Mengambil data dari Chess.com...</p>
-      </div>
 
-      <div id="error" class="hidden glass-strong rounded-2xl p-5 mb-8 border-l-4 border-[color:var(--danger)] reveal">
-        <p id="errorMsg" class="text-[color:var(--danger)] text-sm flex items-center gap-2"><i class="fas fa-circle-exclamation"></i><span></span></p>
-      </div>
-
-      <div id="results" class="hidden space-y-3 pb-10 sm:pb-14 reveal">
-        <div class="flex items-center justify-between flex-wrap gap-2 mb-6">
-          <h3 class="text-xl sm:text-2xl font-bold text-[#F8FAFC]">Game <span id="usernameDisplay" class="text-transparent bg-clip-text bg-gradient-to-r from-[#22C55E] to-[#16a34a]"></span></h3>
-          <span class="text-xs text-[rgba(248,250,252,0.3)]">klik game untuk analisa</span>
+        <div id="error" class="hidden mt-4 p-4 rounded-xl bg-[rgba(239,68,68,0.06)] border border-[rgba(239,68,68,0.2)]">
+          <p id="errorMsg" class="text-[color:var(--danger)] text-sm flex items-center gap-2"><i class="fas fa-circle-exclamation"></i><span></span></p>
         </div>
-        <div id="gameList" class="space-y-2.5"></div>
-      </div>
-    </div>
-  </section>
 
-  <section id="faq" class="relative py-20 sm:py-28 bg-[rgba(255,255,255,0.01)]">
-    <div class="max-w-3xl mx-auto px-4 sm:px-6">
-      <div class="text-center max-w-3xl mx-auto mb-16 reveal">
-        <span class="inline-block text-xs font-semibold tracking-widest text-[color:var(--brand)] uppercase mb-4">FAQ</span>
-        <h2 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#F8FAFC] tracking-tight">Frequently Asked <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#22C55E] to-[#16a34a]">Questions</span></h2>
-      </div>
-      <div class="space-y-3 reveal" id="faqContainer">
-        <div class="faq-item"><button class="faq-question" aria-expanded="false"><span>Apakah website ini gratis?</span><span class="faq-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></button><div class="faq-answer"><div class="faq-answer-inner">Ya, 100% gratis selamanya. Tidak ada iklan, tidak ada batasan jumlah analisis, dan tidak memerlukan akun.</div></div></div>
-        <div class="faq-item"><button class="faq-question" aria-expanded="false"><span>Bagaimana cara kerja analisisnya?</span><span class="faq-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></button><div class="faq-answer"><div class="faq-answer-inner">Stockfish Engine berjalan langsung di browser kamu melalui Web Worker. Setelah kamu memilih game dari Chess.com, setiap langkah akan dievaluasi dan diklasifikasikan berdasarkan perbandingan dengan langkah terbaik engine.</div></div></div>
-        <div class="faq-item"><button class="faq-question" aria-expanded="false"><span>Apakah data game saya disimpan?</span><span class="faq-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></button><div class="faq-answer"><div class="faq-answer-inner">Tidak. Data game diambil langsung dari Chess.com API dan hanya diproses di browser kamu. Kami tidak menyimpan data apapun di server.</div></div></div>
-        <div class="faq-item"><button class="faq-question" aria-expanded="false"><span>Menggunakan engine apa?</span><span class="faq-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></button><div class="faq-answer"><div class="faq-answer-inner">Kami menggunakan Stockfish 10 &mdash; salah satu engine catur terkuat di dunia. Dengan analisis MultiPV depth 10 untuk mendapatkan 3 langkah terbaik di setiap posisi.</div></div></div>
-        <div class="faq-item"><button class="faq-question" aria-expanded="false"><span>Apakah mendukung HP/smartphone?</span><span class="faq-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></button><div class="faq-answer"><div class="faq-answer-inner">Ya, antarmuka kami responsif dan bekerja sempurna di semua perangkat &mdash; desktop, tablet, dan smartphone.</div></div></div>
-        <div class="faq-item"><button class="faq-question" aria-expanded="false"><span>Apakah perlu akun Chess.com?</span><span class="faq-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></button><div class="faq-answer"><div class="faq-answer-inner">Kamu hanya perlu memasukkan username Chess.com untuk mengambil game publik. Tidak perlu login atau memberikan password.</div></div></div>
-        <div class="faq-item"><button class="faq-question" aria-expanded="false"><span>Berapa lama proses analisis?</span><span class="faq-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></button><div class="faq-answer"><div class="faq-answer-inner">Tergantung panjang permainan. Rata-rata 5-15 detik untuk game 40 langkah. Analisis berjalan otomatis setelah game dipilih.</div></div></div>
-        <div class="faq-item"><button class="faq-question" aria-expanded="false"><span>Apakah bisa digunakan offline?</span><span class="faq-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></button><div class="faq-answer"><div class="faq-answer-inner">Tidak untuk saat ini. Karena game diambil dari Chess.com API, koneksi internet diperlukan. Namun engine berjalan di browser, jadi setelah game dimuat, analisis tetap berjalan.</div></div></div>
-      </div>
-    </div>
-  </section>
-
-  <footer class="relative border-t border-[rgba(255,255,255,0.04)] py-16 sm:py-20">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12">
-        <div>
-          <div class="flex items-center gap-2.5 mb-4"><span class="text-2xl" style="color:var(--brand)"><i class="fas fa-chess-knight"></i></span><span class="text-lg font-bold text-[#F8FAFC] tracking-tight">Chess<span style="color:var(--brand)">Review</span></span></div>
-          <p class="text-[rgba(248,250,252,0.3)] text-sm leading-relaxed">Analisis permainan catur gratis menggunakan Stockfish Engine. Review lengkap untuk membantu kamu meningkatkan permainan.</p>
-          <div class="flex gap-3 mt-5">
-            <a href="#" class="w-10 h-10 rounded-xl bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.04)] flex items-center justify-center text-[rgba(248,250,252,0.4)] hover:text-[color:var(--brand)] hover:border-[rgba(34,197,94,0.2)] transition-all no-underline"><i class="fab fa-github"></i></a>
-            <a href="#" class="w-10 h-10 rounded-xl bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.04)] flex items-center justify-center text-[rgba(248,250,252,0.4)] hover:text-[color:var(--brand)] hover:border-[rgba(34,197,94,0.2)] transition-all no-underline"><i class="fab fa-discord"></i></a>
-            <a href="mailto:hello@example.com" class="w-10 h-10 rounded-xl bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.04)] flex items-center justify-center text-[rgba(248,250,252,0.4)] hover:text-[color:var(--brand)] hover:border-[rgba(34,197,94,0.2)] transition-all no-underline"><i class="fas fa-envelope"></i></a>
+        <div id="results" class="hidden mt-5">
+          <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
+            <h3 class="text-lg font-bold text-[#F8FAFC]">Game <span id="usernameDisplay" class="text-transparent bg-clip-text bg-gradient-to-r from-[#22C55E] to-[#16a34a]"></span></h3>
           </div>
+          <div id="gameList" class="space-y-2"></div>
+          <p class="game-count" id="gameCount"></p>
         </div>
-        <div><h4 class="text-sm font-bold text-[#F8FAFC] mb-5">Navigation</h4><ul class="space-y-3"><li><a href="#" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[color:var(--brand)] transition-colors no-underline">Home</a></li><li><a href="#features" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[color:var(--brand)] transition-colors no-underline">Features</a></li><li><a href="/support" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[color:var(--brand)] transition-colors no-underline">Support</a></li><li><a href="/faq" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[color:var(--brand)] transition-colors no-underline">FAQ</a></li><li><a href="/contact" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[color:var(--brand)] transition-colors no-underline">Contact</a></li><li><a href="/about" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[color:var(--brand)] transition-colors no-underline">About</a></li></ul></div>
-        <div><h4 class="text-sm font-bold text-[#F8FAFC] mb-5">Resources</h4><ul class="space-y-3"><li><a href="#" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[color:var(--brand)] transition-colors no-underline">Stockfish Engine</a></li><li><a href="#" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[color:var(--brand)] transition-colors no-underline">Chess.com API</a></li><li><a href="#" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[color:var(--brand)] transition-colors no-underline">Opening Book</a></li><li><a href="#" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[color:var(--brand)] transition-colors no-underline">PGN Reference</a></li><li><a href="#" class="text-sm text-[rgba(248,250,252,0.4)] hover:text-[color:var(--brand)] transition-colors no-underline">Changelog</a></li></ul></div>
-        <div>
-          <h4 class="text-sm font-bold text-[#F8FAFC] mb-5">Stay Updated</h4>
-          <p class="text-[rgba(248,250,252,0.3)] text-sm mb-4">Dapatkan update fitur terbaru dan tips catur.</p>
-          <form id="newsletterForm" class="flex gap-2">
-            <input type="email" id="newsletterEmail" required placeholder="email kamu" class="flex-1 px-4 py-2.5 rounded-xl bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.06)] text-sm text-[#F8FAFC] outline-none focus:border-[rgba(34,197,94,0.3)] transition-all" style="font-family:inherit">
-            <button type="submit" id="newsletterBtn" class="px-4 py-2.5 rounded-xl bg-[color:var(--brand)] text-white text-sm font-semibold hover:bg-[color:var(--brand-dark)] transition-all border-none cursor-pointer" style="font-family:inherit">Subscribe</button>
-          </form>
+
+        <div id="loadingSkeleton" class="hidden mt-5 space-y-2">
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
         </div>
       </div>
-      <div class="mt-12 pt-8 border-t border-[rgba(255,255,255,0.04)] flex flex-col sm:flex-row items-center justify-between gap-4">
-        <p class="text-[rgba(248,250,252,0.2)] text-xs">Made with <i class="fas fa-heart"></i> &middot; Powered by Stockfish</p>
-        <p class="text-[rgba(248,250,252,0.2)] text-xs">&copy; <span id="footerYear"></span> Chess Review. All rights reserved.</p>
+
+      <div class="tab-content" id="tabImportContent" role="tabpanel">
+        <div class="space-y-5">
+          <div>
+            <p class="text-sm font-medium text-[rgba(248,250,252,0.6)] mb-2">Upload file PGN</p>
+            <div class="drop-zone" id="dropZone">
+              <i class="fas fa-cloud-upload-alt"></i>
+              <p>Seret file PGN ke sini</p>
+              <p class="hint">atau klik untuk memilih file</p>
+              <input type="file" id="fileInput" accept=".pgn" class="hidden">
+            </div>
+          </div>
+          <div class="relative">
+            <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-[rgba(255,255,255,0.06)]"></div></div>
+            <div class="relative flex justify-center"><span class="px-3 text-xs text-[rgba(248,250,252,0.25)] bg-[var(--surface)]">atau</span></div>
+          </div>
+          <div>
+            <p class="text-sm font-medium text-[rgba(248,250,252,0.6)] mb-2">Paste PGN</p>
+            <textarea id="pgnText" class="form-input" rows="5" placeholder='Paste PGN di sini...
+
+1. e4 e5
+2. Nf3 Nc6
+3. Bb5 ...' style="resize:vertical;font-family:monospace;font-size:0.85rem"></textarea>
+          </div>
+          <button type="button" id="analyzePgnBtn" class="btn-primary w-full text-sm py-3">
+            <i class="fas fa-play"></i> Analisis PGN
+          </button>
+          <p id="pgnError" class="field-error text-center" role="alert"></p>
+        </div>
       </div>
     </div>
+  </main>
+
+  <footer class="py-10 text-center">
+    <p class="text-[rgba(248,250,252,0.2)] text-xs">Made with <i class="fas fa-heart" style="color:var(--brand)"></i> &middot; Powered by Stockfish &middot; &copy; <span id="footerYear"></span></p>
   </footer>
 
   <script>
   (function () {
     'use strict';
 
-    /* ---------- Toast helper ---------- */
     function showToast(message, type) {
       var container = document.getElementById('toastContainer');
       var toast = document.createElement('div');
@@ -630,7 +501,6 @@
       }, 3200);
     }
 
-    /* ---------- Scroll progress + navbar state + back to top ---------- */
     var navbar = document.getElementById('navbar');
     var backToTop = document.getElementById('backToTop');
     var scrollProgress = document.getElementById('scrollProgress');
@@ -646,19 +516,9 @@
     onScroll();
     backToTop.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
 
-    /* ---------- Smooth scroll buttons ---------- */
-    document.querySelectorAll('[data-scroll-to]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var target = document.querySelector(btn.getAttribute('data-scroll-to'));
-        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
-    });
-
-    /* ---------- Mobile menu ---------- */
     var mobileMenu = document.getElementById('mobileMenu');
     var hamburger = document.getElementById('hamburger');
     var menuBackdrop = document.getElementById('menuBackdrop');
-
     function openMenu() {
       mobileMenu.classList.add('open');
       menuBackdrop.classList.add('open');
@@ -684,80 +544,84 @@
       el.addEventListener('click', closeMenu);
     });
 
-    /* ---------- FAQ accordion ---------- */
-    document.querySelectorAll('.faq-question').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var item = btn.closest('.faq-item');
-        var answer = item.querySelector('.faq-answer');
-        var isActive = item.classList.contains('active');
-        document.querySelectorAll('.faq-item.active').forEach(function (el) {
-          if (el !== item) {
-            el.classList.remove('active');
-            el.querySelector('.faq-answer').style.maxHeight = '0';
-            el.querySelector('.faq-question').setAttribute('aria-expanded', 'false');
-          }
-        });
-        if (isActive) {
-          item.classList.remove('active');
-          answer.style.maxHeight = '0';
-          btn.setAttribute('aria-expanded', 'false');
-        } else {
-          item.classList.add('active');
-          answer.style.maxHeight = answer.scrollHeight + 'px';
-          btn.setAttribute('aria-expanded', 'true');
-        }
-      });
-    });
-    // Recalculate open FAQ height on resize (fixes stale max-height bug)
-    window.addEventListener('resize', function () {
-      var openItem = document.querySelector('.faq-item.active .faq-answer');
-      if (openItem) openItem.style.maxHeight = openItem.scrollHeight + 'px';
-    });
-
-    /* ---------- Reveal-on-scroll ---------- */
-    var reveals = document.querySelectorAll('.reveal, .reveal-zoom');
-    if (reveals.length && 'IntersectionObserver' in window) {
-      var observer = new IntersectionObserver(function (entries) {
-        entries.forEach(function (entry) {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('visible');
-            observer.unobserve(entry.target);
-          }
-        });
-      }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
-      reveals.forEach(function (el) { observer.observe(el); });
-    } else {
-      reveals.forEach(function (el) { el.classList.add('visible'); });
-    }
-
-    /* ---------- Footer year ---------- */
     document.getElementById('footerYear').textContent = new Date().getFullYear();
 
-    /* ---------- Newsletter (demo only, no backend) ---------- */
-    var newsletterForm = document.getElementById('newsletterForm');
-    if (newsletterForm) {
-      newsletterForm.addEventListener('submit', function (e) {
-        e.preventDefault();
-        var email = document.getElementById('newsletterEmail').value.trim();
-        var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailPattern.test(email)) {
-          showToast('Masukkan alamat email yang valid', 'error');
-          return;
-        }
-        var btn = document.getElementById('newsletterBtn');
-        var orig = btn.textContent;
-        btn.textContent = '...';
-        btn.disabled = true;
-        setTimeout(function () {
-          btn.textContent = 'Subscribed!';
-          showToast('Terima kasih sudah subscribe!', 'success');
-          document.getElementById('newsletterEmail').value = '';
-          setTimeout(function () { btn.textContent = orig; btn.disabled = false; }, 2000);
-        }, 700);
+    /* ---------- Tab switching ---------- */
+    document.querySelectorAll('.tab-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.tab-btn').forEach(function (b) { b.classList.remove('active'); b.setAttribute('aria-selected', 'false'); });
+        document.querySelectorAll('.tab-content').forEach(function (c) { c.classList.remove('active'); });
+        btn.classList.add('active');
+        btn.setAttribute('aria-selected', 'true');
+        document.getElementById('tab' + btn.getAttribute('data-tab') + 'Content').classList.add('active');
+      });
+    });
+
+    /* ---------- Username history (localStorage) ---------- */
+    var HISTORY_KEY = 'chess_user_history';
+    var MAX_HISTORY = 10;
+
+    function getHistory() {
+      try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; } catch(e) { return []; }
+    }
+    function saveHistory(list) {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
+    }
+    function addToHistory(username) {
+      var list = getHistory();
+      list = list.filter(function (u) { return u.toLowerCase() !== username.toLowerCase(); });
+      list.unshift(username);
+      if (list.length > MAX_HISTORY) list = list.slice(0, MAX_HISTORY);
+      saveHistory(list);
+      return list;
+    }
+    function clearHistory() {
+      saveHistory([]);
+      renderHistory();
+    }
+    function renderHistory() {
+      var list = getHistory();
+      var dd = document.getElementById('historyDropdown');
+      if (!list.length || !document.activeElement || document.activeElement.id !== 'username') {
+        dd.classList.add('hidden');
+        return;
+      }
+      var html = '';
+      list.forEach(function (u) {
+        html += '<div class="history-item" data-username="' + u.replace(/"/g, '&quot;') + '"><i class="fas fa-history"></i><span>' + u + '</span></div>';
+      });
+      html += '<button type="button" class="history-clear" id="clearHistoryBtn"><i class="fas fa-trash mr-1"></i> Hapus Riwayat</button>';
+      dd.innerHTML = html;
+      dd.classList.remove('hidden');
+      dd.querySelectorAll('.history-item').forEach(function (el) {
+        el.addEventListener('click', function () {
+          document.getElementById('username').value = el.getAttribute('data-username');
+          dd.classList.add('hidden');
+          $('#username').trigger('input');
+        });
+      });
+      document.getElementById('clearHistoryBtn').addEventListener('click', function (e) {
+        e.stopPropagation();
+        clearHistory();
+        showToast('Riwayat dihapus', 'success');
       });
     }
 
-    /* ---------- Chess.com search ---------- */
+    var $username = $('#username');
+    $username.on('focus', function () {
+      renderHistory();
+    });
+    $username.on('input', function () {
+      document.getElementById('historyDropdown').classList.add('hidden');
+      setFieldError('');
+    });
+    $(document).on('click', function (e) {
+      if (!$(e.target).closest('#usernameWrapper').length) {
+        document.getElementById('historyDropdown').classList.add('hidden');
+      }
+    });
+
+    /* ---------- Chess.com fetch with AbortController ---------- */
     var MONTHS = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
     var now = new Date();
     var curMonth = now.getMonth();
@@ -768,21 +632,19 @@
       var val = String(i + 1).padStart(2, '0');
       $month.append('<option value="' + val + '" ' + (i === curMonth ? 'selected' : '') + '>' + name + '</option>');
     });
-
     var $year = $('#year');
     for (var y = curYear; y >= 2005; y--) {
       $year.append('<option value="' + y + '" ' + (y === curYear ? 'selected' : '') + '>' + y + '</option>');
     }
 
     var USERNAME_PATTERN = /^[a-zA-Z0-9_-]{2,25}$/;
-    var $username = $('#username');
     var $usernameError = $('#usernameError');
+    var currentAbort = null;
+    var requestId = 0;
 
     function setFieldError(msg) {
       $usernameError.text(msg || '');
-      $username.toggleClass('input-error', !!msg);
     }
-    $username.on('input', function () { setFieldError(''); });
 
     function escapeHtml(str) {
       return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -810,7 +672,7 @@
       card.innerHTML =
         '<div class="flex items-center justify-between gap-2">' +
           '<div class="flex items-center gap-3 sm:gap-4 min-w-0">' +
-            '<span class="text-xl flex-shrink-0" style="color:var(--brand)"><i class="fas ' + timeIcon + '"></i></span>' +
+            '<span class="text-lg flex-shrink-0" style="color:var(--brand)"><i class="fas ' + timeIcon + '"></i></span>' +
             '<div class="min-w-0">' +
               '<p class="text-[#F8FAFC] font-semibold text-sm sm:text-base truncate">' +
                 (isUserWhite ? '<span style="color:var(--brand)">&#x25CF;</span> ' : '') +
@@ -821,8 +683,8 @@
             '</div>' +
           '</div>' +
           '<div class="text-right flex-shrink-0">' +
-            '<p class="text-base sm:text-lg font-bold ' + resultColor + '">' + escapeHtml(result) + '</p>' +
-            '<p class="text-xs text-[rgba(248,250,252,0.3)] truncate max-w-[100px]">vs ' + escapeHtml(opponent) + '</p>' +
+            '<p class="text-sm sm:text-base font-bold ' + resultColor + '">' + escapeHtml(result) + '</p>' +
+            '<p class="text-xs text-[rgba(248,250,252,0.3)] truncate max-w-[90px]">vs ' + escapeHtml(opponent) + '</p>' +
           '</div>' +
         '</div>';
 
@@ -841,11 +703,33 @@
       );
     }
 
+    function setLoadingVisible(visible) {
+      if (visible) {
+        document.getElementById('loadingSkeleton').classList.remove('hidden');
+        document.getElementById('loadingSteps').classList.remove('hidden');
+        document.querySelectorAll('.progress-step').forEach(function (s) {
+          s.className = 'progress-step';
+        });
+        document.querySelector('.progress-step[data-step="1"]').classList.add('active');
+      } else {
+        document.getElementById('loadingSkeleton').classList.add('hidden');
+        document.getElementById('loadingSteps').classList.add('hidden');
+      }
+    }
+
+    function advanceStep(n) {
+      document.querySelector('.progress-step[data-step="' + n + '"]').classList.remove('active');
+      document.querySelector('.progress-step[data-step="' + n + '"]').classList.add('done');
+      var next = n + 1;
+      var nextEl = document.querySelector('.progress-step[data-step="' + next + '"]');
+      if (nextEl) nextEl.classList.add('active');
+    }
+
     function setSearchLoading(isLoading) {
       var $btn = $('#searchBtn');
       $btn.prop('disabled', isLoading);
       $('#searchBtnIcon').html(isLoading ? '<span class="spinner" style="width:16px;height:16px;border-width:2px"></span>' : '<i class="fas fa-search"></i>');
-      $('#searchBtnText').text(isLoading ? 'Mencari...' : 'Cari Game');
+      $('#searchBtnText').text(isLoading ? 'Mengambil...' : 'Ambil Permainan');
     }
 
     $('#searchForm').on('submit', async function (e) {
@@ -853,21 +737,40 @@
 
       var username = $username.val().trim();
       if (!username) { setFieldError('Username tidak boleh kosong'); $username.trigger('focus'); return; }
-      if (!USERNAME_PATTERN.test(username)) { setFieldError('Username hanya boleh huruf, angka, garis bawah, dan strip'); $username.trigger('focus'); return; }
+      if (!USERNAME_PATTERN.test(username)) { setFieldError('Username hanya boleh huruf, angka, garis bawah, dan strip (2-25 karakter)'); $username.trigger('focus'); return; }
       setFieldError('');
 
       var month = $('#month').val();
       var year = $('#year').val();
 
-      $('#loading').removeClass('hidden');
-      $('#error').addClass('hidden');
+      // Abort previous request
+      if (currentAbort) {
+        currentAbort.abort();
+        currentAbort = null;
+      }
+
+      var rid = ++requestId;
+      var controller = new AbortController();
+      currentAbort = controller;
+
       $('#results').addClass('hidden');
+      $('#error').addClass('hidden');
       $('#gameList').empty();
+      setLoadingVisible(true);
       setSearchLoading(true);
 
       try {
-        var res = await $.getJSON('/api/proxy/games/' + encodeURIComponent(username) + '/' + year + '/' + month);
-        $('#loading').addClass('hidden');
+        var res = await $.ajax({
+          url: '/api/proxy/games/' + encodeURIComponent(username) + '/' + year + '/' + month,
+          signal: controller.signal
+        });
+
+        if (rid !== requestId) return; // stale
+
+        advanceStep(2);
+        advanceStep(3);
+
+        setLoadingVisible(false);
         $('#usernameDisplay').text(username);
 
         if (!res.games || res.games.length === 0) {
@@ -878,25 +781,197 @@
           games.forEach(function (game) {
             if (renderGame(game, username)) rendered++;
           });
+          document.getElementById('gameCount').textContent = rendered + ' game ditemukan';
           if (rendered === 0) {
             renderEmptyState('Game ditemukan, tapi tidak ada data PGN yang bisa dianalisis');
           }
         }
         $('#results').removeClass('hidden');
-        document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        // Save to history
+        addToHistory(username);
+
       } catch (err) {
-        $('#loading').addClass('hidden');
+        if (err && err.statusText === 'abort') return;
+        if (rid !== requestId) return;
+
+        setLoadingVisible(false);
         var msg = 'Gagal mengambil data. Silakan coba lagi.';
         if (err && err.responseJSON && err.responseJSON.error) msg = err.responseJSON.error;
         else if (err && err.status === 404) msg = 'Username tidak ditemukan di Chess.com';
-        else if (err && err.status === 0) msg = 'Tidak dapat terhubung ke server. Periksa koneksi internet kamu.';
+        else if (err && (err.status === 0 || err.statusText === 'error')) msg = 'Tidak dapat terhubung ke server. Periksa koneksi internet kamu.';
         $('#errorMsg span').text(msg);
         $('#error').removeClass('hidden');
         showToast(msg, 'error');
       } finally {
-        setSearchLoading(false);
+        if (rid === requestId) {
+          setSearchLoading(false);
+          currentAbort = null;
+        }
       }
     });
+
+    /* ---------- PGN Import ---------- */
+    function analyzePgn(pgn) {
+      if (!pgn || !pgn.trim()) {
+        $('#pgnError').text('PGN tidak boleh kosong');
+        return;
+      }
+      try {
+        var chess = new Chess();
+        if (!chess.load_pgn(pgn, { sloppy: true })) {
+          $('#pgnError').text('PGN tidak valid. Periksa format PGN kamu.');
+          return;
+        }
+      } catch(e) {
+        $('#pgnError').text('PGN tidak valid: ' + e.message);
+        return;
+      }
+      window.location.href = '/game?pgn=' + encodeURIComponent(pgn);
+    }
+
+    $('#analyzePgnBtn').on('click', function () {
+      $('#pgnError').text('');
+      var pgn = $('#pgnText').val();
+      analyzePgn(pgn);
+    });
+
+    // Drag & drop
+    var dropZone = document.getElementById('dropZone');
+    var fileInput = document.getElementById('fileInput');
+
+    dropZone.addEventListener('click', function () { fileInput.click(); });
+
+    dropZone.addEventListener('dragover', function (e) {
+      e.preventDefault();
+      dropZone.classList.add('drag-over');
+    });
+    dropZone.addEventListener('dragleave', function () {
+      dropZone.classList.remove('drag-over');
+    });
+    dropZone.addEventListener('drop', function (e) {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      var files = e.dataTransfer.files;
+      if (files.length > 0) handlePgnFile(files[0]);
+    });
+    fileInput.addEventListener('change', function () {
+      if (fileInput.files.length > 0) handlePgnFile(fileInput.files[0]);
+    });
+
+    function handlePgnFile(file) {
+      if (!file.name.toLowerCase().endsWith('.pgn')) {
+        showToast('Hanya menerima file .pgn', 'error');
+        return;
+      }
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        var pgn = e.target.result;
+        $('#pgnText').val(pgn);
+        showToast('File PGN berhasil dimuat (' + file.name + ')', 'success');
+        analyzePgn(pgn);
+      };
+      reader.onerror = function () {
+        showToast('Gagal membaca file', 'error');
+      };
+      reader.readAsText(file);
+    }
+
+    /* ---------- Empty state toggle based on tab ---------- */
+    function toggleEmptyState() {
+      var activeTab = document.querySelector('.tab-content.active');
+      var isEmpty = !activeTab || activeTab.id === 'tabChesscomContent';
+      document.getElementById('emptyState').style.display = isEmpty ? '' : 'none';
+    }
+    document.querySelectorAll('.tab-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        setTimeout(toggleEmptyState, 50);
+      });
+    });
+    toggleEmptyState();
+
+    /* ---------- PWA: Service Worker ---------- */
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').then(function(reg) {
+        reg.addEventListener('updatefound', function() {
+          var newSW = reg.installing;
+          newSW.addEventListener('statechange', function() {
+            if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+              showUpdateSnackbar(reg);
+            }
+          });
+        });
+      }).catch(function() {});
+    }
+
+    /* ---------- PWA: Install prompt ---------- */
+    var deferredPrompt = null;
+    var installBtn = document.getElementById('installBtn');
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      deferredPrompt = e;
+      installBtn.classList.remove('hidden');
+    });
+    installBtn.addEventListener('click', function() {
+      installBtn.classList.add('hidden');
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(function() { deferredPrompt = null; });
+    });
+    window.addEventListener('appinstalled', function() {
+      installBtn.classList.add('hidden');
+      deferredPrompt = null;
+    });
+
+    /* ---------- PWA: Online / offline indicator ---------- */
+    var indicator = document.getElementById('onlineIndicator');
+    function updateOnlineStatus() {
+      var isOnline = navigator.onLine;
+      var dot = isOnline ? '#22C55E' : '#EF4444';
+      var label = isOnline ? 'Online' : 'Offline';
+      indicator.style.display = 'inline-flex';
+      indicator.innerHTML = '<span class="w-1.5 h-1.5 rounded-full" style="background:' + dot + '"></span><span class="text-' + (isOnline ? 'green' : 'red') + '-400">' + label + '</span>';
+    }
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    updateOnlineStatus();
+
+    /* ---------- PWA: Splash screen ---------- */
+    window.addEventListener('load', function() {
+      setTimeout(function() {
+        var splash = document.getElementById('splashScreen');
+        if (splash) {
+          splash.style.opacity = '0';
+          setTimeout(function() { splash.style.display = 'none'; }, 500);
+        }
+      }, 1500);
+    });
+
+    /* ---------- PWA: Version update snackbar ---------- */
+    function showUpdateSnackbar(reg) {
+      var existing = document.getElementById('updateSnackbar');
+      if (existing) existing.remove();
+      var bar = document.createElement('div');
+      bar.id = 'updateSnackbar';
+      bar.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:99998;background:rgba(17,24,39,0.96);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:0.8rem 1.2rem;box-shadow:0 10px 40px rgba(0,0,0,0.5);display:flex;align-items:center;gap:1rem;font-size:0.85rem;color:#F8FAFC;animation:fadeUp 0.3s ease;max-width:360px';
+      bar.innerHTML = '<span><i class="fas fa-circle-up text-green-500 mr-1.5"></i>Versi terbaru tersedia.</span><button onclick="applyUpdate()" style="background:linear-gradient(135deg,#22C55E,#16a34a);color:white;border:none;padding:0.4rem 0.8rem;border-radius:8px;cursor:pointer;font-weight:600;font-family:inherit;font-size:0.8rem;white-space:nowrap">Perbarui</button>';
+      document.body.appendChild(bar);
+    }
+    window.applyUpdate = function() {
+      var bar = document.getElementById('updateSnackbar');
+      if (bar) bar.remove();
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistration().then(function(reg) {
+          if (reg && reg.waiting) {
+            reg.waiting.postMessage({ type: 'CLEAR_CACHES' });
+            navigator.serviceWorker.addEventListener('message', function(event) {
+              if (event.data && event.data.type === 'CACHES_CLEARED') {
+                window.location.reload();
+              }
+            });
+          }
+        });
+      }
+    };
 
   })();
   </script>

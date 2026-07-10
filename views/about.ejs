@@ -3,9 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>About - Chess Game Review</title>
+  <meta name="theme-color" content="#22C55E">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>About - Chess Review</title>
   <meta name="description" content="Tentang Chess Game Review. Misi, visi, teknologi, dan statistik platform analisis catur gratis.">
   <link rel="icon" href="/images/wN.png" type="image/png">
+  <link rel="manifest" href="/manifest.webmanifest">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -29,6 +33,25 @@
     .tech-card:hover { background: rgba(255,255,255,0.04); border-color: rgba(34,197,94,0.15); transform: translateY(-4px); }
     .timeline-dot { width: 14px; height: 14px; border-radius: 50%; background: #22C55E; border: 3px solid rgba(34,197,94,0.2); flex-shrink: 0; margin-top: 4px; }
     @media (max-width: 768px) { .stat-number { font-size: 2.5rem; } }
+    .bottomBar {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(11,18,32,0.92);
+      backdrop-filter: blur(20px) saturate(1.4);
+      border-top: 1px solid rgba(255,255,255,0.04);
+      padding: 0.5rem 1rem;
+      display: none; align-items: center; justify-content: center;
+      box-shadow: 0 -4px 30px rgba(0,0,0,0.3);
+    }
+    .bottomBar-nav { display: flex; align-items: center; gap: 0.75rem; }
+    .bottomBar-nav a {
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+      padding: 0.35rem 0.7rem; border-radius: 10px; text-decoration: none;
+      color: rgba(248,250,252,0.55); font-size: 0.65rem; font-weight: 500;
+      transition: all 0.2s ease;
+    }
+    .bottomBar-nav a i { font-size: 1.05rem; }
+    .bottomBar-nav a:hover, .bottomBar-nav a.active { color: #22C55E; background: rgba(34,197,94,0.08); }
+    @media (max-width: 767px) { .bottomBar { display: flex; } }
   </style>
 </head>
 <body>
@@ -48,7 +71,7 @@
     </div>
   </nav>
 
-  <section class="pt-32 pb-20 sm:pb-28">
+  <section class="pt-32 pb-28 sm:pb-28">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <!-- Header -->
       <div class="text-center max-w-3xl mx-auto mb-16">
@@ -111,5 +134,7 @@
       </div>
     </div>
   </footer>
+  <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/sw.js').catch(function(){})}</script>
+  <div class="bottomBar" id="bottomBar"><div class="bottomBar-nav"><a href="/"><i class="fas fa-home"></i><span>Home</span></a><a href="/support"><i class="fas fa-heart"></i><span>Dukung</span></a><a href="/faq"><i class="fas fa-question-circle"></i><span>FAQ</span></a><a href="/about" class="active"><i class="fas fa-info-circle"></i><span>Tentang</span></a></div></div>
 </body>
 </html>

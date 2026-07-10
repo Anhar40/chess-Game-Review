@@ -13,6 +13,9 @@ app.set('views', path.join(__dirname, 'views'));
 // Serve piece images locally (put PNG files like wP.png, bK.png etc in views/images)
 app.use('/images', express.static(path.join(__dirname, 'views', 'images')));
 
+// Serve PWA static files (manifest, icons, service worker)
+app.use(express.static(path.join(__dirname, 'public')));
+
 // Serve sound effects
 app.use('/sounds', express.static(path.join(__dirname, 'sounds')));
 
@@ -235,6 +238,11 @@ app.get('/game', (req, res) => {
   // so it can be embedded directly inside a <script> tag as a JS string literal.
   const pgnJson = JSON.stringify(pgn).replace(/</g, '\\u003c');
   res.render('game', { pgnJson });
+});
+
+// Offline page for PWA
+app.get('/offline', (req, res) => {
+  res.render('offline');
 });
 
 // 404 fallback

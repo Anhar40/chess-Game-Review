@@ -3,7 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>Analisa Game - Chess.com Analyzer Lite</title>
+  <meta name="theme-color" content="#22C55E">
+  <meta name="application-name" content="Chess Review">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Chess Review">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/icons/icon.svg">
+  <title>Analisa Game - Chess Review</title>
   <meta name="description" content="Analisis permainan catur dengan Stockfish. Lihat evaluasi langkah demi langkah, deteksi opening, akurasi, dan grafik evaluasi.">
   <meta name="keywords" content="chess, catur, analisis catur, stockfish, chess.com, review game, analisa game catur, evaluasi langkah">
   <meta property="og:title" content="Analisa Game Catur dengan Stockfish">
@@ -19,6 +27,7 @@
   <script src="/cdn/chessboard.min.js"></script>
   <script src="/cdn/chess.min.js" onerror="window._chessJsFailed=true"></script>
   <script src="/cdn/chart.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
   <style>
     body { background-color: #161512; }
     .card { background-color: #1e1e1b; }
@@ -101,6 +110,23 @@
 
     @media (min-width: 640px) {
       .chart-container { height: 250px; }
+    }
+
+    @media (max-width: 767px) {
+      #board { max-width: none; }
+      .page-content { padding-left: 4px; padding-right: 4px; padding-bottom: 64px; }
+      #boardWrap { gap: 4px; }
+      .eval-bar-container { width: 14px; }
+      #evalText { font-size: 8px; }
+      .card.rounded-xl:first-of-type { padding: 6px !important; }
+      .max-w-7xl { padding-left: 2px; padding-right: 2px; }
+      .player-row { padding: 3px 2px; }
+      .player-name { font-size: 0.85rem; }
+      .player-avatar { width: 22px; height: 22px; }
+      #moveList { max-height: 180px; }
+      .chart-container { height: 180px; }
+      #bottomActionBar { padding-left: 8px; padding-right: 8px; }
+      .bar-btn { padding: 4px 10px; }
     }
   </style>
   <script>
@@ -293,15 +319,15 @@
   <div id="bottomActionBar">
     <div class="flex items-center justify-around max-w-sm mx-auto">
       <button id="barPrevBtn" class="bar-btn" disabled>
-        <span class="bar-btn-icon">◀</span>
+        <span class="bar-btn-icon"><i class="fas fa-chevron-left"></i></span>
         <span class="bar-btn-label">Prev</span>
       </button>
       <button id="barRotateBtn" class="bar-btn">
-        <span class="bar-btn-icon">🔄</span>
+        <span class="bar-btn-icon"><i class="fas fa-rotate-right"></i></span>
         <span class="bar-btn-label">Rotate</span>
       </button>
       <button id="barNextBtn" class="bar-btn" disabled>
-        <span class="bar-btn-icon">▶</span>
+        <span class="bar-btn-icon"><i class="fas fa-chevron-right"></i></span>
         <span class="bar-btn-label">Next</span>
       </button>
     </div>
@@ -1967,6 +1993,11 @@
 
     if (pgnValid) {
       setTimeout(() => $('#startAnalysisBtn').trigger('click'), 600);
+    }
+
+    // PWA: Service Worker registration
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(function() {});
     }
   </script>
 </body>
