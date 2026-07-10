@@ -186,10 +186,86 @@ const coreApi = new midtransClient.CoreApi({
   serverKey: process.env.MIDTRANS_SERVER_KEY || '',
 });
 
-app.get('/', (req, res) => res.render('index'));
-app.get('/support', (req, res) => res.render('support', { midtransClientKey: process.env.MIDTRANS_CLIENT_KEY || '' }));
-app.get('/faq', (req, res) => res.render('faq'));
-app.get('/about', (req, res) => res.render('about'));
+// ------------------------------------------------------------------
+// SEO metadata helper
+// ------------------------------------------------------------------
+const SITE_URL = process.env.SITE_URL || 'https://chess-game-review-ten.vercel.app';
+const SITE_NAME = 'Chess Review';
+const DEFAULT_OG_IMAGE = SITE_URL + '/icons/icon.svg';
+const SEO = {
+  home: {
+    title: 'Chess Review - Analisis Permainan Catur Gratis dengan Stockfish',
+    description: 'Analisis permainan catur gratis menggunakan Stockfish Engine. Review lengkap: Book, Brilliant, Best, Excellent, Good, Inaccuracy, Mistake, Blunder. Dari Chess.com atau file PGN.',
+    canonical: SITE_URL + '/',
+    robots: 'index, follow',
+    ogTitle: 'Chess Review - Analisis Catur Premium dengan Stockfish',
+    ogDescription: 'Analisis permainan catur gratis menggunakan Stockfish. Evaluasi setiap langkah, deteksi opening, temukan blunder.',
+    ogType: 'website',
+    ogImage: DEFAULT_OG_IMAGE,
+  },
+  game: {
+    title: 'Review Permainan Catur - Chess Review',
+    description: 'Analisis permainan catur dengan Stockfish. Lihat evaluasi langkah demi langkah, deteksi opening, akurasi, dan grafik evaluasi.',
+    canonical: SITE_URL + '/game',
+    robots: 'noindex, follow',
+    ogTitle: 'Review Permainan Catur dengan Stockfish',
+    ogDescription: 'Analisis permainan catur dengan Stockfish. Evaluasi langkah, akurasi, opening book, dan grafik evaluasi.',
+    ogType: 'website',
+    ogImage: DEFAULT_OG_IMAGE,
+  },
+  faq: {
+    title: 'FAQ - Chess Review | Pertanyaan Seputar Analisis Catur',
+    description: 'Pertanyaan yang sering diajukan tentang Chess Review: cara analisis, engine yang digunakan, dukungan perangkat, dan biaya. Gratis selamanya.',
+    canonical: SITE_URL + '/faq',
+    robots: 'index, follow',
+    ogTitle: 'FAQ - Chess Review',
+    ogDescription: 'Pertanyaan yang sering diajukan tentang Chess Review: cara analisis, engine yang digunakan, dukungan perangkat, dan biaya.',
+    ogType: 'website',
+    ogImage: DEFAULT_OG_IMAGE,
+  },
+  about: {
+    title: 'Tentang Chess Review - Misi, Teknologi & Statistik',
+    description: 'Pelajari misi, visi, teknologi, dan statistik Chess Review — platform analisis catur gratis berbasis Stockfish.',
+    canonical: SITE_URL + '/about',
+    robots: 'index, follow',
+    ogTitle: 'Tentang Chess Review',
+    ogDescription: 'Pelajari misi, visi, teknologi, dan statistik platform analisis catur gratis.',
+    ogType: 'website',
+    ogImage: DEFAULT_OG_IMAGE,
+  },
+  support: {
+    title: 'Dukung Chess Review - Donasi untuk Pengembangan',
+    description: 'Dukung pengembangan Chess Review. Donasi via QRIS, GoPay, Virtual Account, dan metode pembayaran lainnya.',
+    canonical: SITE_URL + '/support',
+    robots: 'index, follow',
+    ogTitle: 'Dukung Chess Review',
+    ogDescription: 'Dukung pengembangan Chess Review. Donasi via QRIS, GoPay, Virtual Account.',
+    ogType: 'website',
+    ogImage: SITE_URL + '/og-image.png',
+  },
+  offline: {
+    title: 'Offline - Chess Review',
+    description: 'Chess Review sedang offline. Periksa koneksi internet Anda dan coba lagi.',
+    canonical: SITE_URL + '/offline',
+    robots: 'noindex, follow',
+    ogTitle: 'Offline - Chess Review',
+    ogDescription: 'Chess Review sedang offline.',
+    ogType: 'website',
+    ogImage: DEFAULT_OG_IMAGE,
+  },
+};
+
+function renderPage(res, view, seoKey, extra) {
+  const seo = SEO[seoKey] || SEO.home;
+  res.render(view, Object.assign({ seo, SITE_URL, SITE_NAME }, extra));
+}
+
+app.get('/', (req, res) => renderPage(res, 'index', 'home'));
+app.get('/support', (req, res) => renderPage(res, 'support', 'support', {
+  midtransClientKey: process.env.MIDTRANS_CLIENT_KEY || '',
+}));
+app.get('/faq', (req, res) => renderPage(res, 'faq', 'faq'));
+app.get('/about', (req, res) => renderPage(res, 'about', 'about'));
 
 // Midtrans Snap — popup payment (bisa pilih metode: QRIS, GoPay, VA, dll)
 app.post('/api/midtrans/transaction', express.json(), async (req, res) => {
@@ -234,20 +310,67 @@ app.get('/game', (req, res) => {
   if (!pgn || typeof pgn !== 'string' || !pgn.trim()) {
     return res.redirect('/');
   }
-  // JSON.stringify safely escapes quotes/backslashes/newlines/</script>
-  // so it can be embedded directly inside a <script> tag as a JS string literal.
   const pgnJson = JSON.stringify(pgn).replace(/</g, '\\u003c');
-  res.render('game', { pgnJson });
+  // Build a descriptive title from PGN header if possible
+  renderPage(res, 'game', 'game', { pgnJson });
 });
 
 // Offline page for PWA
 app.get('/offline', (req, res) => {
-  res.render('offline');
+  renderPage(res, 'offline', 'offline');
+});
+
+// Sitemap XML
+app.get('/sitemap.xml', (req, res) => {
+  const pages = [
+    { loc: '/', changefreq: 'weekly', priority: '1.0' },
+    { loc: '/faq', changefreq: 'monthly', priority: '0.8' },
+    { loc: '/about', changefreq: 'monthly', priority: '0.7' },
+    { loc: '/support', changefreq: 'monthly', priority: '0.6' },
+  ];
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${pages.map(p => `  <url>
+    <loc>${SITE_URL}${p.loc}</loc>
+    <changefreq>${p.changefreq}</changefreq>
+    <priority>${p.priority}</priority>
+  </url>`).join('\n')}
+</urlset>`;
+  res.set('Content-Type', 'application/xml');
+  res.send(xml);
+});
+
+// Robots.txt
+app.get('/robots.txt', (req, res) => {
+  res.set('Content-Type', 'text/plain');
+  res.send(`User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /cdn/
+
+Sitemap: ${SITE_URL}/sitemap.xml
+`);
+});
+
+// Google Search Console verification
+app.get('/google04296f569490c7f3.html', (req, res) => {
+  res.set('Content-Type', 'text/html; charset=utf-8');
+  res.send('google-site-verification: google04296f569490c7f3.html');
 });
 
 // 404 fallback
 app.use((req, res) => {
-  res.status(404).send('Halaman tidak ditemukan');
+  const seo = {
+    title: '404 - Halaman Tidak Ditemukan - Chess Review',
+    description: 'Halaman yang Anda cari tidak ditemukan. Kembali ke beranda Chess Review.',
+    canonical: SITE_URL + '/404',
+    robots: 'noindex, follow',
+    ogTitle: '404 - Halaman Tidak Ditemukan',
+    ogDescription: 'Halaman yang Anda cari tidak ditemukan.',
+    ogType: 'website',
+    ogImage: DEFAULT_OG_IMAGE,
+  };
+  res.status(404).render('404', { seo, SITE_URL, SITE_NAME });
 });
 
 app.listen(PORT, () => {

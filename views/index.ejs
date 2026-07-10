@@ -3,6 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title><%= seo.title %></title>
+  <meta name="description" content="<%= seo.description %>">
+  <meta name="robots" content="<%= seo.robots %>">
+  <link rel="canonical" href="<%= seo.canonical %>">
+  <meta name="keywords" content="chess, catur, analisis catur, stockfish, chess.com, review game, analisa catur, opening book, blunder detection">
   <meta name="theme-color" content="#22C55E">
   <meta name="application-name" content="Chess Review">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -10,30 +15,67 @@
   <meta name="apple-mobile-web-app-title" content="Chess Review">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="msapplication-TileColor" content="#0B1220">
-  <meta name="msapplication-TileImage" content="/images/icon-144.png">
   <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/images/wN.png" type="image/png">
   <link rel="apple-touch-icon" href="/icons/icon.svg">
   <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon.svg">
   <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon.svg">
   <link rel="apple-touch-icon" sizes="512x512" href="/icons/icon.svg">
-  <title>Chess Review - Analisis Permainan Catur dengan Stockfish</title>
-  <meta name="description" content="Analisis permainan catur gratis menggunakan Stockfish Engine. Review lengkap: Book, Brilliant, Best, Excellent, Good, Inaccuracy, Mistake, Blunder.">
-  <meta name="keywords" content="chess, catur, analisis catur, stockfish, chess.com, review game, analisa catur, opening book, blunder detection">
-  <meta property="og:title" content="Chess Game Review - Analisis Catur Premium dengan Stockfish">
-  <meta property="og:description" content="Analisis permainan catur gratis menggunakan Stockfish. Evaluasi setiap langkah, deteksi opening, temukan blunder.">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://chess-game-review-ten.vercel.app">
-  <meta property="og:image" content="/images/wN.png">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
-  <link rel="icon" href="/images/wN.png" type="image/png">
+  <!-- Open Graph -->
+  <meta property="og:title" content="<%= seo.ogTitle %>">
+  <meta property="og:description" content="<%= seo.ogDescription %>">
+  <meta property="og:url" content="<%= seo.canonical %>">
+  <meta property="og:type" content="<%= seo.ogType %>">
+  <meta property="og:image" content="<%= seo.ogImage %>">
+  <meta property="og:site_name" content="<%= SITE_NAME %>">
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="<%= seo.ogTitle %>">
+  <meta name="twitter:description" content="<%= seo.ogDescription %>">
+  <meta name="twitter:image" content="<%= seo.ogImage %>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Lexend:wght@600;700;800&display=swap">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Lexend:wght@600;700;800&display=swap" rel="stylesheet">
   <script src="/cdn/tailwind"></script>
   <script src="/cdn/jquery.min.js"></script>
   <script src="/cdn/chess.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Chess Review",
+    "url": "<%= SITE_URL %>",
+    "description": "Analisis permainan catur gratis menggunakan Stockfish Engine. Review lengkap dari Chess.com maupun file PGN.",
+    "inLanguage": "id",
+    "applicationCategory": "GameApplication",
+    "operatingSystem": "All"
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Chess Review",
+    "url": "<%= SITE_URL %>",
+    "description": "Analisis permainan catur gratis dengan Stockfish Engine, deteksi opening book, dan klasifikasi langkah.",
+    "applicationCategory": "GameApplication",
+    "operatingSystem": "All",
+    "browserRequirements": "Requires JavaScript"
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Chess Review",
+    "url": "<%= SITE_URL %>",
+    "logo": "<%= SITE_URL %>/icons/icon.svg",
+    "description": "Platform analisis catur gratis berbasis Stockfish Engine."
+  }
+  </script>
   <style>
     :root{
       --bg:#0B1220;
@@ -340,7 +382,7 @@
 
   <nav class="navbar" id="navbar">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-      <a href="#" class="flex items-center gap-2.5 no-underline group">
+      <a href="#" class="flex items-center gap-2.5 no-underline group" aria-label="Beranda Chess Review">
         <span class="text-2xl" style="line-height:1;color:var(--brand)"><i class="fas fa-chess-knight"></i></span>
         <span class="text-lg font-bold text-[#F8FAFC] tracking-tight">Chess<span style="color:var(--brand)">Review</span></span>
       </a>
@@ -388,6 +430,7 @@
         <p class="text-xs mt-1" style="color:var(--text-faint)">Silakan masukkan username Chess.com atau import file PGN.</p>
       </div>
 
+      <h2 class="sr-only">Sumber Permainan</h2>
       <div class="flex gap-2 mb-6 bg-[rgba(255,255,255,0.02)] p-1 rounded-xl" role="tablist">
         <button class="tab-btn active" data-tab="Chesscom" role="tab" aria-selected="true" id="tabChesscom"><i class="fas fa-chess-king mr-2"></i>Chess.com</button>
         <button class="tab-btn" data-tab="Import" role="tab" aria-selected="false" id="tabImport"><i class="fas fa-file-import mr-2"></i>Import PGN</button>

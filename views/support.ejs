@@ -3,13 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= seo.title %></title>
+  <meta name="description" content="<%= seo.description %>">
+  <meta name="robots" content="<%= seo.robots %>">
+  <link rel="canonical" href="<%= seo.canonical %>">
   <meta name="theme-color" content="#22C55E">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Support - Chess Review</title>
-  <meta name="description" content="Dukung pengembangan Chess Game Review. Donasi via QRIS Midtrans.">
-  <link rel="icon" href="/images/wN.png" type="image/png">
+  <meta name="apple-mobile-web-app-title" content="Chess Review">
+  <meta name="mobile-web-app-capable" content="yes">
   <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/images/wN.png" type="image/png">
+  <link rel="apple-touch-icon" href="/icons/icon.svg">
+  <!-- Open Graph -->
+  <meta property="og:title" content="<%= seo.ogTitle %>">
+  <meta property="og:description" content="<%= seo.ogDescription %>">
+  <meta property="og:url" content="<%= seo.canonical %>">
+  <meta property="og:type" content="<%= seo.ogType %>">
+  <meta property="og:image" content="<%= seo.ogImage %>">
+  <meta property="og:site_name" content="<%= SITE_NAME %>">
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="<%= seo.ogTitle %>">
+  <meta name="twitter:description" content="<%= seo.ogDescription %>">
+  <meta name="twitter:image" content="<%= seo.ogImage %>">
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -17,6 +35,22 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
   <script src="/cdn/jquery.min.js"></script>
   <script src="https://app.midtrans.com/snap/snap.js" data-client-key="<%= midtransClientKey %>"></script>
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": "Donasi Chess Review",
+    "description": "Dukung pengembangan Chess Review melalui donasi sukarela.",
+    "url": "<%= seo.canonical %>",
+    "offers": {
+      "@type": "AggregateOffer",
+      "priceCurrency": "IDR",
+      "lowPrice": "1000",
+      "offerCount": "1"
+    }
+  }
+  </script>
   <style>
     *, *::before, *::after { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
@@ -88,7 +122,7 @@
 <body>
   <nav class="navbar">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-      <a href="/" class="flex items-center gap-2.5 no-underline">
+      <a href="/" class="flex items-center gap-2.5 no-underline" aria-label="Beranda Chess Review">
         <span class="text-2xl" style="line-height:1">♟</span>
         <span class="text-lg font-bold text-[#F8FAFC] tracking-tight">Chess<span class="text-[#22C55E]">Review</span></span>
       </a>

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= seo.title %></title>
+  <meta name="description" content="<%= seo.description %>">
+  <meta name="robots" content="<%= seo.robots %>">
+  <link rel="canonical" href="<%= seo.canonical %>">
+  <meta property="og:title" content="<%= seo.ogTitle %>">
+  <meta property="og:description" content="<%= seo.ogDescription %>">
+  <meta property="og:url" content="<%= seo.canonical %>">
+  <meta property="og:type" content="<%= seo.ogType %>">
+  <meta property="og:image" content="<%= seo.ogImage %>">
+  <meta property="og:site_name" content="<%= SITE_NAME %>">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="<%= seo.ogTitle %>">
+  <meta name="twitter:description" content="<%= seo.ogDescription %>">
+  <meta name="twitter:image" content="<%= seo.ogImage %>">
+  <meta name="theme-color" content="#22C55E">
+  <link rel="icon" href="/images/wN.png" type="image/png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/icons/icon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Lexend:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: #0B1220;
+      color: #F8FAFC;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem;
+    }
+    .container { max-width: 420px; }
+    .code { font-size: 6rem; font-weight: 800; background: linear-gradient(135deg, #22C55E, #16a34a); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; }
+    h1 { font-family: 'Lexend', sans-serif; font-size: 1.5rem; font-weight: 800; margin: 1rem 0 0.75rem; }
+    p { color: rgba(248,250,252,0.55); font-size: 0.95rem; line-height: 1.6; margin-bottom: 2rem; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: linear-gradient(135deg, #22C55E, #16a34a);
+      color: white; font-weight: 600; font-family: inherit;
+      padding: 0.8rem 2rem; border-radius: 12px; border: none;
+      cursor: pointer; transition: all 0.25s ease;
+      text-decoration: none; font-size: 0.95rem;
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(34,197,94,0.28); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="code">404</div>
+    <h1>Halaman Tidak Ditemukan</h1>
+    <p>Halaman yang Anda cari mungkin telah dipindahkan atau tidak tersedia.</p>
+    <a href="/" class="btn"><i class="fas fa-home"></i> Kembali ke Beranda</a>
+  </div>
+  <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/sw.js').catch(function(){})}</script>
+</body>
+</html>
