@@ -189,7 +189,7 @@ const coreApi = new midtransClient.CoreApi({
 // ------------------------------------------------------------------
 // SEO metadata helper
 // ------------------------------------------------------------------
-const SITE_URL = process.env.SITE_URL || 'https://chess-game-review-ten.vercel.app';
+const SITE_URL = process.env.SITE_URL || 'https://review-catur.vercel.app';
 const SITE_NAME = 'Chess Review';
 const DEFAULT_OG_IMAGE = SITE_URL + '/icons/icon.svg';
 const SEO = {
