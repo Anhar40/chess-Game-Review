@@ -1295,12 +1295,6 @@
     function showOverlay() {
       $('#analysisOverlay').addClass('show');
       forceAdLayout();
-      if (!$('#popunder-58377').length) {
-        var s = document.createElement('script');
-        s.id = 'popunder-58377';
-        s.src = 'https://crazylatchdisturbance.com/e6/b4/87/e6b487b487c9a79242a047615a9760f7.js';
-        document.body.appendChild(s);
-      }
       if (!window._adObserver) {
         window._adObserver = new MutationObserver(forceAdLayout);
         var c = document.getElementById('container-58377c017129b108965cda8fb76fc4c2');
